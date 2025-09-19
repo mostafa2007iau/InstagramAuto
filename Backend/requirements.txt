@@ -14,5 +14,5 @@ rq
 prometheus-client
 cryptography
 aioredis
-jsonlogic
+json-logic
 python-multipart
