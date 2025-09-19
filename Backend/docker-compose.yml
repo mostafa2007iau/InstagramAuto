@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  redis:
+    image: "redis:7-alpine"
+    container_name: "insta_redis"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: .
+    container_name: "insta_backend"
+    depends_on:
+      - redis
+    environment:
+      - DATABASE_URL=sqlite:///./dev.db
+      - REDIS_URL=redis://redis:6379/0
+      - FERNET_KEY=${FERNET_KEY:-}
+      - CURSOR_SECRET=${CURSOR_SECRET:-}
+      - DEFAULT_LOCALE=en
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./dev.db:/app/dev.db
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  redis_data:

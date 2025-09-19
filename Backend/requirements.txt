@@ -1,0 +1,18 @@
+# requirements.txt
+fastapi
+uvicorn[standard]
+sqlmodel
+aiofiles
+requests
+pytest
+httpx
+pytest-asyncio
+python-dotenv
+instagrapi
+redis
+rq
+prometheus-client
+cryptography
+aioredis
+jsonlogic
+python-multipart

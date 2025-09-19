@@ -1,0 +1,109 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>ec0e9226-b0c0-4615-b51f-18d2dbfc63d0</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>
+    </StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>Backend</Name>
+    <RootNamespace>Backend</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include=".github\workflows\" />
+    <Folder Include="app\" />
+    <Folder Include="app\models\" />
+    <Folder Include="app\middleware\" />
+    <Folder Include="app\tests\" />
+    <Folder Include="app\schemas\" />
+    <Folder Include="app\routers\" />
+    <Folder Include="app\services\" />
+    <Folder Include="app\utils\" />
+    <Folder Include=".github\" />
+    <Folder Include="scripts\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".github\workflows\ci.yml" />
+    <Content Include="docker-compose.yml" />
+    <Content Include="Dockerfile" />
+    <Content Include="project_map.txt" />
+    <Content Include="README_EN.md" />
+    <Content Include="README_FA.md" />
+    <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="app\config.py" />
+    <Compile Include="app\db.py" />
+    <Compile Include="app\deps.py" />
+    <Compile Include="app\i18n.py" />
+    <Compile Include="app\logging_utils.py" />
+    <Compile Include="app\main.py" />
+    <Compile Include="app\middleware\verbosity_middleware.py" />
+    <Compile Include="app\models\account_model.py" />
+    <Compile Include="app\models\job_model.py" />
+    <Compile Include="app\models\log_model.py" />
+    <Compile Include="app\models\rule_model.py" />
+    <Compile Include="app\models\session_db_model.py" />
+    <Compile Include="app\models\session_model.py" />
+    <Compile Include="app\routers\accounts_router.py" />
+    <Compile Include="app\routers\challenge_router.py" />
+    <Compile Include="app\routers\challenge_ws_router.py" />
+    <Compile Include="app\routers\health_router.py" />
+    <Compile Include="app\routers\inbound_router.py" />
+    <Compile Include="app\routers\logs_router.py" />
+    <Compile Include="app\routers\medias_router.py" />
+    <Compile Include="app\routers\metrics_router.py" />
+    <Compile Include="app\routers\rules_router.py" />
+    <Compile Include="app\schemas\log_schema.py" />
+    <Compile Include="app\schemas\media_schema.py" />
+    <Compile Include="app\schemas\pagination_schema.py" />
+    <Compile Include="app\schemas\rule_schema.py" />
+    <Compile Include="app\schemas\session_schema.py" />
+    <Compile Include="app\services\challenge_manager.py" />
+    <Compile Include="app\services\challenge_store_redis.py" />
+    <Compile Include="app\services\insta_client_factory.py" />
+    <Compile Include="app\services\insta_login_handler.py" />
+    <Compile Include="app\services\proxy_service.py" />
+    <Compile Include="app\services\rules_engine.py" />
+    <Compile Include="app\services\sender_queue.py" />
+    <Compile Include="app\services\sender_worker.py" />
+    <Compile Include="app\services\session_manager.py" />
+    <Compile Include="app\services\telemetry_service.py" />
+    <Compile Include="app\tests\conftest.py" />
+    <Compile Include="app\tests\test_challenge_ws.py" />
+    <Compile Include="app\tests\test_challenge_ws_async.py" />
+    <Compile Include="app\tests\test_e2e_async_and_redis.py" />
+    <Compile Include="app\tests\test_e2e_login_probe.py" />
+    <Compile Include="app\tests\test_instagrapi_integration.py" />
+    <Compile Include="app\tests\test_proxy_service.py" />
+    <Compile Include="app\tests\test_session_blob_and_challenge.py" />
+    <Compile Include="app\tests\test_session_manager.py" />
+    <Compile Include="app\tests\test_session_persistence.py" />
+    <Compile Include="app\utils\insta_error_map.py" />
+    <Compile Include="app\utils\openapi_i18n.py" />
+    <Compile Include="app\utils\retry.py" />
+    <Compile Include="app\utils\secure_cursor.py" />
+    <Compile Include="scripts\precommit_check_summaries.py" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

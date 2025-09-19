@@ -1,0 +1,30 @@
+# project_map.txt
+# List of files and short responsibility notes for backend.
+
+app/main.py - FastAPI app entry, include routers, middleware, startup/shutdown events.
+app/config.py - Env-based configuration and defaults (DEFAULT_LOCALE, LOG_VERBOSITY, DB_URI).
+app/i18n.py - Localization helper reading Accept-Language, message catalogs loader.
+app/deps.py - Dependency providers (db, current_locale, client_log_level).
+app/logging_utils.py - Helper to format logs according to verbosity and locale.
+
+models/session_model.py - Session metadata model (id, account_id, proxy, proxy_enabled, last_media_check, locale_preference).
+models/user_model.py - Account/user persistent model.
+models/media_model.py - Media metadata model.
+models/rule_model.py - Rule definitions.
+models/log_model.py - Structured logs.
+
+schemas/*.py - Pydantic schemas for inputs/outputs, include bilingual descriptions in schema.Field(..., description=...).
+
+services/session_manager.py - Session lifecycle, login, send, probe logic (instagrapi integration mockable).
+services/proxy_service.py - Test proxy, validate, apply per-session proxy.
+services/media_service.py - Media fetch, pagination cursor encoding/decoding.
+
+routers/*_router.py - Routers for accounts, medias, rules, logs, proxy, health.
+
+middleware/verbosity_middleware.py - Reads X-Client-Log-Level header and sets request.state.log_verbosity.
+middleware/locale_middleware.py - Reads Accept-Language or query param and sets request.state.locale.
+
+utils/retry.py - exponential backoff helper used by probe.
+scripts/precommit_check_summaries.py - check that every Python file has Persian and English summaries.
+
+tests/* - Unit/integration test skeletons.
