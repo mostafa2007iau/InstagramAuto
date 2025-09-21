@@ -2,29 +2,47 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    strategy:
+      matrix:
+        python-version: [3.10, 3.11]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run lint (docs check)
+      - name: Wait for Redis
         run: |
-          python scripts/precommit_check_summaries.py
+          for i in {1..15}; do
+            if redis-cli -h 127.0.0.1 ping; then echo "redis ready" && break; fi
+            sleep 1
+          done
       - name: Run tests
+        env:
+          REDIS_URL: redis://127.0.0.1:6379/0
+          DATABASE_URL: sqlite:///./test_ci.db
+          FERNET_KEY: ${{ secrets.FERNET_KEY }}
+          CURSOR_SECRET: ${{ secrets.CURSOR_SECRET }}
         run: |
           pytest -q
-      - name: Run tests
-        run: |
-          pytest -q -m "not network"

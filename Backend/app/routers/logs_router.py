@@ -1,9 +1,11 @@
 ﻿"""
 Persian:
-    Router async برای خواندن لاگ‌ها با فیلتر سطح و صفحه‌بندی. پاسخ‌ها PaginatedResponse[LogOut] هستند.
+    Router async برای خواندن لاگ‌ها با فیلتر سطح و صفحه‌بندی.
+    endpoint فهرست لاگ‌ها با rate-limit محافظت شده است.
 
 English:
-    Async router to read logs with level/account filters and pagination. Responses use PaginatedResponse[LogOut].
+    Async router to read logs with filters and pagination.
+    The list endpoint is protected with a default rate-limit.
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -14,6 +16,7 @@ from app.models.log_model import EventLog
 from app.schemas.log_schema import LogOut
 from app.schemas.pagination_schema import PaginatedResponse, PaginationMeta
 import base64, json
+from app.middleware.rate_limit_dependency import default_rate_limit
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
@@ -30,7 +33,7 @@ def _decode_cursor(token: Optional[str]) -> dict:
         return {"offset": 0}
 
 @router.get("", response_model=PaginatedResponse[LogOut], summary="List logs / فهرست لاگ‌ها", description="List logs with filters and pagination / فهرست لاگ‌ها با فیلتر و صفحه‌بندی")
-async def list_logs(level: Optional[str] = Query(None), account_id: Optional[str] = Query(None), limit: int = Query(50, le=200), cursor: Optional[str] = Query(None), db: Session = Depends(get_session)):
+async def list_logs(level: Optional[str] = Query(None), account_id: Optional[str] = Query(None), limit: int = Query(50, le=200), cursor: Optional[str] = Query(None), db: Session = Depends(get_session), _rl=Depends(default_rate_limit)):
     decoded = _decode_cursor(cursor)
     offset = decoded.get("offset", 0)
     statement = select(EventLog).order_by(EventLog.created_at.desc())

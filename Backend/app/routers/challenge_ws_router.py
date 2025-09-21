@@ -1,29 +1,29 @@
 ﻿"""
 Persian:
-    WebSocket endpoint async برای جریان چالش با استفاده از Redis pub/sub.
-    اتصال WebSocket پیام‌های مربوط به توکن متصل‌شده را به صورت real-time ارسال می‌کند.
+    WebSocket endpoint برای جریان چالش با استفاده از Redis pub/sub.
+    پیام‌های لاگ هنگام اتصال/قطع اضافه شده‌اند.
 
 English:
-    Async WebSocket endpoint to stream challenge events using Redis pub/sub.
-    The WebSocket forwards events related to the connected token in real-time.
+    WebSocket endpoint to stream challenge events using Redis pub/sub.
+    Connection/disconnection events are logged.
 """
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services.challenge_store_redis import subscribe_challenge_events
 import asyncio
+import logging
+
+logger = logging.getLogger("challenge-ws")
 
 router = APIRouter(prefix="/ws/challenge", tags=["challenge-ws"])
 
 @router.websocket("/{token}")
 async def ws_challenge(websocket: WebSocket, token: str):
     """
-    Persian:
-        اتصال websocket را قبول کرده و به کانال pubsub متصل می‌شود. تنها eventهای مرتبط با token ارسال می‌شوند.
-
-    English:
-        Accept websocket connection and subscribe to pubsub channel. Only forwards events matching the token.
+    Accept websocket connection and subscribe to pubsub channel. Only forwards events matching the token.
     """
     await websocket.accept()
+    logger.info("ws connected token=%s", token)
     try:
         async for ev in subscribe_challenge_events():
             try:
@@ -33,8 +33,10 @@ async def ws_challenge(websocket: WebSocket, token: str):
             if ev_token == token:
                 await websocket.send_json(ev)
     except WebSocketDisconnect:
+        logger.info("ws disconnected token=%s", token)
         return
     except Exception as e:
+        logger.exception("ws error for token=%s error=%s", token, str(e))
         try:
             await websocket.send_json({"error": str(e)})
         except Exception:

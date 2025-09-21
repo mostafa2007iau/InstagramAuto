@@ -1,24 +1,15 @@
 ﻿"""
 Persian:
-    قالب‌بندی پیام‌های لاگ براساس verbosity و locale برای قرار دادن در بدنه پاسخ یا metadata.
+    ابزار کمک برای قالب‌بندی لاگ‌های مشتری (client) با سطوح verbosity.
 
 English:
-    Format log payloads according to verbosity and locale for inclusion in response bodies or metadata.
+    Small helper to format client logs with verbosity levels.
 """
 
-from app.config import LogVerbosity
-from typing import Any, Dict
-
-def format_log(payload: str, verbosity: LogVerbosity, locale: str) -> Dict[str, Any]:
-    """
-    Persian:
-        بسته به verbosity یک آبجکت لاگ مناسب می‌سازد.
-
-    English:
-        Build a log object according to verbosity level.
-    """
-    if verbosity == LogVerbosity.NONE:
-        return {}
-    if verbosity == LogVerbosity.SUMMARY:
-        return {"summary": payload[:200], "locale": locale}
-    return {"full": payload, "locale": locale}
+def format_log(message: str, verbosity, locale: str = "en"):
+    # verbosity may be enum or simple flag; keep simple formatting
+    if str(verbosity).upper() == "FULL":
+        return {"full": message}
+    if str(verbosity).upper() == "SUMMARY":
+        return {"summary": message[:200]}
+    return {"none": ""}

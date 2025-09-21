@@ -1,0 +1,526 @@
+﻿{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "InstaAutomation Backend API",
+    "version": "v1",
+    "description": "API for InstaAutomation backend. Bilingual examples available (en/fa)."
+  },
+  "servers": [
+    {
+      "url": "http://156.236.31.41:8000",
+      "description": "Production API server"
+    }
+  ],
+  "paths": {
+    "/api/accounts/sessions": {
+      "post": {
+        "summary": "Create session / ایجاد سشن",
+        "description": "Create a session metadata record / ساخت رکورد متادیتای سشن",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SessionCreateIn" },
+              "examples": {
+                "en": {
+                  "value": {
+                    "account_id": "acct1",
+                    "proxy": null,
+                    "proxy_enabled": false,
+                    "locale": "en"
+                  }
+                },
+                "fa": {
+                  "value": {
+                    "account_id": "acct1",
+                    "proxy": null,
+                    "proxy_enabled": false,
+                    "locale": "fa"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SessionOut" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/sessions/{session_id}/login": {
+      "post": {
+        "summary": "Login and probe / ورود و پروب",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/LoginSuccessResponse" },
+                    { "$ref": "#/components/schemas/LoginChallengeResponse" },
+                    { "$ref": "#/components/schemas/LoginErrorResponse" }
+                  ]
+                },
+                "examples": {
+                  "success_en": {
+                    "value": {
+                      "result": {
+                        "ok": true,
+                        "login": {
+                          "status": "ok",
+                          "user_id": "user_1"
+                        },
+                        "medias_count": 5,
+                        "message": "Service healthy"
+                      },
+                      "log": { "summary": "ok" }
+                    }
+                  },
+                  "challenge_en": {
+                    "value": {
+                      "ok": false,
+                      "challenge_required": true,
+                      "challenge_token": "tok_abc123",
+                      "code": "challenge_required"
+                    }
+                  },
+                  "error_en": {
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "bad_password",
+                        "message": "Bad username or password"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/sessions/{session_id}/export": {
+      "get": {
+        "summary": "Export session / خروجی سشن",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported session payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/api/medias": {
+      "get": {
+        "summary": "List medias / فهرست مدیاها",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged medias",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaginatedMedias" },
+                "examples": {
+                  "en": {
+                    "value": {
+                      "items": [
+                        {
+                          "id": "m_1",
+                          "caption": "Hello",
+                          "thumbnail_url": null
+                        }
+                      ],
+                      "meta": {
+                        "next_cursor": "opaque_token",
+                        "count_returned": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rules": {
+      "post": {
+        "summary": "Create rule / ایجاد قاعده",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RuleIn" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Rule created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RuleOut" } } }
+          }
+        }
+      },
+      "get": {
+        "summary": "List rules / فهرست قواعد",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules page",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedRules" } } }
+          }
+        }
+      }
+    },
+    "/api/challenge/{token}": {
+      "get": {
+        "summary": "Get challenge / دریافت چالش",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Challenge state",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChallengeState" } } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Resolve challenge / حل چالش",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/event": {
+      "post": {
+        "summary": "Inbound event / رویداد ورودی",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "matched": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus metrics",
+        "responses": {
+          "200": {
+            "description": "Prometheus exposition format",
+            "content": { "text/plain": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SessionCreateIn": {
+        "type": "object",
+        "required": [ "account_id" ],
+        "properties": {
+          "account_id": { "type": "string" },
+          "proxy": { "type": [ "string", "null" ] },
+          "proxy_enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "locale": {
+            "type": "string",
+            "enum": [ "en", "fa" ],
+            "default": "en"
+          }
+        }
+      },
+      "SessionOut": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "account_id": { "type": "string" },
+          "proxy": { "type": [ "string", "null" ] },
+          "proxy_enabled": { "type": "boolean" },
+          "session_blob": {
+            "type": [ "string", "null" ],
+            "description": "base64 session dump (opaque)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LoginSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "object",
+            "properties": {
+              "ok": { "type": "boolean" },
+              "login": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "medias_count": { "type": "integer" },
+              "message": { "type": "string" }
+            }
+          },
+          "log": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "LoginChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "challenge_required": { "type": "boolean" },
+          "challenge_token": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
+      "LoginErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      },
+      "MediaItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "caption": { "type": [ "string", "null" ] },
+          "thumbnail_url": {
+            "type": [ "string", "null" ],
+            "format": "uri"
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "next_cursor": { "type": [ "string", "null" ] },
+          "count_returned": { "type": "integer" }
+        }
+      },
+      "PaginatedMedias": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MediaItem" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "RuleIn": {
+        "type": "object",
+        "required": [ "account_id", "name", "expression" ],
+        "properties": {
+          "account_id": { "type": "string" },
+          "name": { "type": "string" },
+          "expression": {
+            "type": "string",
+            "description": "json-logic expression as JSON string"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "RuleOut": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "account_id": { "type": "string" },
+          "name": { "type": "string" },
+          "expression": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaginatedRules": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RuleOut" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "ChallengeState": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" },
+          "type": { "type": "string" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

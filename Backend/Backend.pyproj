@@ -38,6 +38,7 @@
     <Content Include=".github\workflows\ci.yml" />
     <Content Include="docker-compose.yml" />
     <Content Include="Dockerfile" />
+    <Content Include="openapi_v1.json" />
     <Content Include="project_map.txt" />
     <Content Include="README_EN.md" />
     <Content Include="README_FA.md" />
@@ -95,6 +96,7 @@
     <Compile Include="app\utils\openapi_i18n.py" />
     <Compile Include="app\utils\retry.py" />
     <Compile Include="app\utils\secure_cursor.py" />
+    <Compile Include="openapi_gen.py" />
     <Compile Include="scripts\precommit_check_summaries.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

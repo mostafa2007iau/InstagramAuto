@@ -194,4 +194,73 @@ class MockInstaClientWrapper(BaseInstaClientWrapper):
     def __init__(self):
         self._proxy = None
         self._store = {}  # simple in-memory medias per uid
-        # prefill
+        # prefill example medias for demonstration
+        self._store_default = [{"id": f"m_{i}", "caption": f"sample {i}", "thumbnail_url": None} for i in range(50)]
+        self._last_response = {}
+
+    @classmethod
+    def create_new(cls):
+        return cls()
+
+    def set_proxy(self, proxy: Optional[str]):
+        self._proxy = proxy
+
+    def login(self, username: str, password: str):
+        # simple mock behavior:
+        if username == "bad":
+            # simulate bad password behavior
+            return {"error": "bad_password", "status": "fail"}
+        if username.startswith("challenge"):
+            return {"challenge_required": True, "challenge_options": {"via": "sms"}}
+        # success
+        return {"status": "ok", "user_id": f"user_{username}"}
+
+    def user_medias(self, uid: str, amount: int):
+        # return first `amount` items from default store
+        return self._store_default[:amount]
+
+    def get_user_medias_page(self, uid: str, limit: int, provider_cursor: Optional[str]):
+        # provider_cursor simulates an offset encoded as int string
+        offset = 0
+        if provider_cursor:
+            try:
+                offset = int(provider_cursor)
+            except Exception:
+                offset = 0
+        items = self._store_default[offset: offset + limit]
+        next_cursor = str(offset + limit) if (offset + limit) < len(self._store_default) else None
+        return items, next_cursor
+
+    def dump_session_bytes(self) -> bytes:
+        return b"mock-session-bytes"
+
+    def load_session_bytes(self, b: bytes):
+        # no-op for mock
+        return
+
+    def send_direct_message(self, target, message):
+        # simulate success
+        return {"ok": True, "sent_to": target, "message": message}
+
+# Factory that returns either real wrapper or mock wrapper
+class InstaClientFactory:
+    @staticmethod
+    def create_new():
+        instagrapi = _import_instagrapi()
+        if instagrapi:
+            try:
+                return InstaClientRealWrapper.create_new()
+            except Exception:
+                # fallback to mock if instagrapi import works but initialization fails
+                return MockInstaClientWrapper.create_new()
+        else:
+            return MockInstaClientWrapper.create_new()
+
+# Helpers: encrypt/decrypt session bytes to base64 token
+def encrypt_session_bytes(b: bytes) -> str:
+    token = fernet.encrypt(b)
+    return base64.urlsafe_b64encode(token).decode()
+
+def decrypt_session_token(token: str) -> bytes:
+    raw = base64.urlsafe_b64decode(token.encode())
+    return fernet.decrypt(raw)

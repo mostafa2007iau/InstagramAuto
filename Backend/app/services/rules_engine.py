@@ -11,19 +11,19 @@ from sqlmodel import Session, select
 from app.models.rule_model import Rule
 from app.db import engine
 from app.services.sender_queue import enqueue_send
-from jsonlogic import jsonlogic
+from json-logic import json-logic
 import ast
 
 def evaluate_expression_jsonlogic(expression: Dict[str, Any], context: Dict[str, Any]) -> bool:
     """
     Persian:
-        expression باید یک ساختار jsonlogic معتبر باشد. context داده‌های runtime را فراهم می‌کند.
+        expression باید یک ساختار json-logic معتبر باشد. context داده‌های runtime را فراهم می‌کند.
 
     English:
-        expression must be a valid jsonlogic structure. context provides runtime data.
+        expression must be a valid json-logic structure. context provides runtime data.
     """
     try:
-        return bool(jsonlogic(expression, data=context))
+        return bool(json-logic(expression, data=context))
     except Exception:
         return False
 
@@ -57,7 +57,7 @@ def run_rules_for_account(account_id: str, event: Dict[str, Any]):
         statement = select(Rule).where(Rule.account_id == account_id, Rule.enabled == True)
         rules = db.exec(statement).all()
     for r in rules:
-        # Expect r.expression to be JSON string representing jsonlogic; parse safely
+        # Expect r.expression to be JSON string representing json-logic; parse safely
         try:
             expr = __import__("json").loads(r.expression)
         except Exception:
