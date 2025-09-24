@@ -14,7 +14,7 @@ from app.services.session_manager import SessionManager
 from app.services.proxy_service import test_proxy
 from app.i18n import translate
 from app.logging_utils import format_log
-from app.middleware.rate_limit_dependency import default_rate_limit, strict_rate_limit
+from app.middleware.verbosity_middleware import default_rate_limit, strict_rate_limit
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
 

@@ -16,7 +16,7 @@ from app.schemas.media_schema import MediaItem
 from app.schemas.pagination_schema import PaginatedResponse, PaginationMeta
 from app.utils.secure_cursor import sign, verify
 from app.i18n import translate
-from app.middleware.rate_limit_dependency import default_rate_limit
+from app.middleware.verbosity_middleware import default_rate_limit
 
 router = APIRouter(prefix="/api/medias", tags=["medias"])
 

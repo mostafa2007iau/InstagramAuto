@@ -12,7 +12,7 @@ redis
 rq
 prometheus-client
 cryptography
-aioredis
+redis[async]
 json-logic
 python-multipart
 fastapi-limiter

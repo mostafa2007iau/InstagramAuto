@@ -13,13 +13,14 @@ English:
 """
 
 import os
+from app.middleware import verbosity_middleware
 from fastapi import FastAPI, Response
 from app.routers import accounts_router, medias_router, rules_router, logs_router, challenge_router, challenge_ws_router, metrics_router, health_router, inbound_router
-from app.middleware.verbosity_middleware import VerbosityMiddleware
+from app.middleware.verbosity_middleware import default_rate_limit, RateLimiter, strict_rate_limit
 from app.db import init_db
 from app.services import telemetry_service
 from fastapi_limiter import FastAPILimiter
-import aioredis
+import redis.asyncio as redis  # redis-py async client
 
 app = FastAPI(
     title="InstaAutomation Backend",
@@ -27,21 +28,24 @@ app = FastAPI(
     version="v1"
 )
 
-# Middleware
-app.add_middleware(VerbosityMiddleware)
+app.add_middleware(verbosity_middleware)
 
 @app.on_event("startup")
 async def startup_event():
     # initialize DB and other startup tasks
     init_db()
 
-    # Initialize aioredis and fastapi-limiter
+    # initialize Redis and fastapi-limiter
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
-        redis = await aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
-        await FastAPILimiter.init(redis)
+        client = redis.Redis.from_url(
+            redis_url,
+            encoding="utf-8",
+            decode_responses=True,
+        )
+        await FastAPILimiter.init(client)
     except Exception:
-        # if limiter init fails, continue but rate-limiting endpoints will not be protected
+        # if limiter init fails, continue without rate-limiting
         pass
 
 # Health

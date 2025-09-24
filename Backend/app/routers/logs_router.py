@@ -16,7 +16,7 @@ from app.models.log_model import EventLog
 from app.schemas.log_schema import LogOut
 from app.schemas.pagination_schema import PaginatedResponse, PaginationMeta
 import base64, json
-from app.middleware.rate_limit_dependency import default_rate_limit
+from app.middleware.verbosity_middleware import default_rate_limit
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 

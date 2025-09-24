@@ -11,7 +11,7 @@ English:
 from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict
 from app.services import challenge_store_redis as store
-from app.middleware.rate_limit_dependency import default_rate_limit, strict_rate_limit
+from app.middleware.verbosity_middleware import default_rate_limit, strict_rate_limit
 from app.deps import get_locale
 
 router = APIRouter(prefix="/api/challenge", tags=["challenge"])

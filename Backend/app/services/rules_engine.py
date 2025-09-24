@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from app.models.rule_model import Rule
 from app.db import engine
 from app.services.sender_queue import enqueue_send
-from json-logic import json-logic
+from json_logic import jsonLogic
 import ast
 
 def evaluate_expression_jsonlogic(expression: Dict[str, Any], context: Dict[str, Any]) -> bool:
@@ -23,7 +23,7 @@ def evaluate_expression_jsonlogic(expression: Dict[str, Any], context: Dict[str,
         expression must be a valid json-logic structure. context provides runtime data.
     """
     try:
-        return bool(json-logic(expression, data=context))
+        return bool(jsonLogic(expression, data=context))
     except Exception:
         return False
 

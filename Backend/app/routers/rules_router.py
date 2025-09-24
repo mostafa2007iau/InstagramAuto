@@ -10,7 +10,7 @@ English:
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 from app.services.rules_engine import evaluate_rules_for_event
-from app.middleware.rate_limit_dependency import default_rate_limit
+from app.middleware.verbosity_middleware import default_rate_limit
 from typing import Dict
 
 router = APIRouter(prefix="/api/inbound", tags=["inbound"])

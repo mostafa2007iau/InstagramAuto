@@ -8,10 +8,20 @@ English:
     Provides a sample dependency for default limits (e.g., 20 req/min).
 """
 
+# app/middleware/verbosity_middleware.py
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.responses import Response
+
 from fastapi_limiter.depends import RateLimiter
 
-# Default rate: 20 requests per minute per client (by IP)
-# در endpointها از Depends(default_rate_limit) استفاده کن
 default_rate_limit = RateLimiter(times=20, seconds=60)
-# مثال برای stricter limit:
-strict_rate_limit = RateLimiter(times=5, seconds=60)
+strict_rate_limit  = RateLimiter(times=5,  seconds=60)
+
+class VerbosityMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # مثال: خواندن کوئری‌پارامتر verbosity
+        request.state.verbosity = request.query_params.get("verbosity", "normal")
+        response: Response = await call_next(request)
+        return response
