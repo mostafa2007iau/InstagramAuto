@@ -18,7 +18,9 @@ namespace InstagramAuto.Client.Views
         {
             if (BindingContext is LoginViewModel vm && !string.IsNullOrEmpty(vm.ErrorMessage))
             {
-                await Clipboard.SetTextAsync(vm.ErrorMessage);
+                // Prefer copying ErrorDetails if present
+                var textToCopy = string.IsNullOrEmpty(vm.ErrorDetails) ? vm.ErrorMessage : vm.ErrorDetails;
+                await Clipboard.SetTextAsync(textToCopy);
                 await DisplayAlert("Copied", "Error message copied to clipboard.", "OK");
             }
         }

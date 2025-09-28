@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
+using InstagramAuto.Client.Helpers;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -25,6 +26,8 @@ namespace InstagramAuto.Client.ViewModels
         private string _newName;
         private string _newExpression;
         private bool _newEnabled = true;
+
+        private string _errorDetails;
 
         public ObservableCollection<RuleOut> Rules { get; } = new ObservableCollection<RuleOut>();
 
@@ -54,6 +57,17 @@ namespace InstagramAuto.Client.ViewModels
         }
 
         public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+        public string ErrorDetails
+        {
+            get => _errorDetails;
+            set
+            {
+                if (_errorDetails == value) return;
+                _errorDetails = value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>  
         /// Persian: نام قاعده جدید  
@@ -107,6 +121,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -121,7 +136,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
             finally
             {
@@ -146,6 +163,7 @@ namespace InstagramAuto.Client.ViewModels
 
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -172,7 +190,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
             finally
             {

@@ -4,24 +4,39 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
-    Title="Posts">
-    <Grid>
-        <!--  Activity Indicator  -->
-        <ActivityIndicator
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsBusy}"
-            IsVisible="{Binding IsBusy}"
-            VerticalOptions="Center" />
+    Title="پست‌ها">
+    <StackLayout Padding="20" Spacing="10">
+        <Label Text="لیست پست‌ها" FontSize="22" HorizontalOptions="Center" />
 
-        <!--  Error Message  -->
-        <Label
-            HorizontalOptions="Center"
+        <!-- Error message and copy button -->
+        <StackLayout
             IsVisible="{Binding HasError}"
-            Text="{Binding ErrorMessage}"
-            TextColor="Red"
-            VerticalOptions="Center" />
+            BackgroundColor="#fff0f0"
+            Padding="8"
+            Spacing="4">
+            <Label
+                Text="{Binding ErrorMessage}"
+                TextColor="Red"
+                FontAttributes="Bold" />
+            <Button
+                Text="کپی خطا"
+                Clicked="OnCopyErrorClicked"
+                FontSize="12"
+                BackgroundColor="#eee"
+                TextColor="Black"
+                Padding="6,2"
+                HorizontalOptions="End" />
+            <Editor
+                Text="{Binding ErrorDetails}"
+                IsReadOnly="True"
+                AutoSize="TextChanges"
+                HeightRequest="120"
+                FontSize="12"
+                BackgroundColor="#f8f8f8"
+                TextColor="Black" />
+        </StackLayout>
 
-        <!--  Collection of Media  -->
+        <!-- Posts list -->
         <CollectionView
             Margin="10"
             ItemsSource="{Binding Items}"
@@ -32,19 +47,24 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame
-                        Margin="4"
+                        Margin="0,4"
                         Padding="8"
-                        HasShadow="True">
+                        BorderColor="#ddd"
+                        CornerRadius="8">
                         <StackLayout Orientation="Horizontal" Spacing="10">
                             <Image
-                                HeightRequest="80"
                                 Source="{Binding Thumbnail_url}"
-                                WidthRequest="80" />
-                            <Label Text="{Binding Caption}" VerticalOptions="Center" />
+                                WidthRequest="60"
+                                HeightRequest="60"
+                                Aspect="AspectFill" />
+                            <Label
+                                Text="{Binding Caption}"
+                                VerticalOptions="Center"
+                                FontSize="16" />
                         </StackLayout>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </Grid>
+    </StackLayout>
 </ContentPage>

@@ -3,23 +3,42 @@
     x:Class="InstagramAuto.Client.Views.LogsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
-    Title="Logs">
+    Title="لاگ‌ها">
 
-    <Grid Padding="10">
-        <ActivityIndicator
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsBusy}"
-            IsVisible="{Binding IsBusy}"
-            VerticalOptions="Center" />
+    <StackLayout Padding="20" Spacing="10">
+        <Label Text="لاگ‌ها" FontSize="22" HorizontalOptions="Center" />
 
-        <Label
-            HorizontalOptions="Center"
+        <!-- Error message and copy button -->
+        <StackLayout
             IsVisible="{Binding HasError}"
-            Text="{Binding ErrorMessage}"
-            TextColor="Red"
-            VerticalOptions="Center" />
+            BackgroundColor="#fff0f0"
+            Padding="8"
+            Spacing="4">
+            <Label
+                Text="{Binding ErrorMessage}"
+                TextColor="Red"
+                FontAttributes="Bold" />
 
+            <Button
+                Text="کپی خطا"
+                Clicked="OnCopyErrorClicked"
+                FontSize="12"
+                BackgroundColor="#eee"
+                TextColor="Black"
+                Padding="6,2"
+                HorizontalOptions="End" />
+
+            <Editor
+                Text="{Binding ErrorDetails}"
+                IsReadOnly="True"
+                AutoSize="TextChanges"
+                HeightRequest="120"
+                FontSize="12"
+                BackgroundColor="#f8f8f8"
+                TextColor="Black" />
+        </StackLayout>
+
+        <!-- Logs list -->
         <CollectionView
             ItemsSource="{Binding Items}"
             RemainingItemsThreshold="10"
@@ -27,17 +46,26 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame
-                        Margin="4"
+                        Margin="0,4"
                         Padding="8"
-                        HasShadow="True">
+                        BorderColor="#ddd"
+                        CornerRadius="8">
                         <StackLayout>
-                            <Label FontAttributes="Bold" Text="{Binding Timestamp}" />
-                            <Label Text="{Binding Level}" TextColor="Gray" />
-                            <Label Text="{Binding Message}" />
+                            <Label
+                                Text="{Binding Timestamp}"
+                                FontSize="12"
+                                TextColor="#888" />
+                            <Label
+                                Text="{Binding Level}"
+                                FontSize="14"
+                                FontAttributes="Bold" />
+                            <Label
+                                Text="{Binding Message}"
+                                FontSize="14" />
                         </StackLayout>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </Grid>
+    </StackLayout>
 </ContentPage>

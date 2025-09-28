@@ -19,6 +19,8 @@ namespace InstagramAuto.Client
             Routing.RegisterRoute(nameof(ImportExportPage), typeof(ImportExportPage));
             Routing.RegisterRoute(nameof(LiveActivityPage), typeof(LiveActivityPage));
             Routing.RegisterRoute(nameof(StatsPage), typeof(StatsPage));
+            // Register DashboardPage so Shell navigation can resolve //DashboardPage
+            Routing.RegisterRoute(nameof(DashboardPage), typeof(DashboardPage));
         }
     }
 }

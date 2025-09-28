@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
+using InstagramAuto.Client.Helpers;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -28,6 +29,7 @@ namespace InstagramAuto.Client.ViewModels
         private int _jitterMax;
         private bool _isBusy;
         private string _errorMessage;
+        private string _errorDetails;
 
         /// <summary>  
         /// Persian: فعال‌سازی تأخیر بین اکشن‌ها  
@@ -153,6 +155,21 @@ namespace InstagramAuto.Client.ViewModels
         }
 
         /// <summary>  
+        /// Persian: جزئیات خطا  
+        /// English: Error details for debugging  
+        /// </summary>
+        public string ErrorDetails
+        {
+            get => _errorDetails;
+            set
+            {
+                if (_errorDetails == value) return;
+                _errorDetails = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>  
         /// Persian: آیا خطا نمایش داده شود؟  
         /// English: Whether to show the error message  
         /// </summary>
@@ -192,6 +209,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -210,7 +228,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
             finally
             {
@@ -229,6 +249,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -251,7 +272,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
             finally
             {

@@ -418,6 +418,9 @@ class SessionManager:
                 "traceback": tb
             }
 
+        # Log the raw login response for debugging
+        logger.info("Raw login response for %s: %s", session_id, login_res)
+
         # handle common shapes returned by clients
         if isinstance(login_res, dict):
             if login_res.get("two_factor_required") or login_res.get("two_factor"):
@@ -465,7 +468,47 @@ class SessionManager:
         localized = translate(message_key, sess.locale_preference if sess else "fa", uid=uid)
         localized_en = translate(message_key, "en", uid=uid)
 
-        if not (isinstance(login_res, dict) and login_res.get("authenticated", False)):
+        # Determine explicit failure from login_res
+        explicit_fail = False
+        fail_reason = None
+        if isinstance(login_res, dict):
+            status = str(login_res.get("status") or "").lower()
+            if status in ("fail", "error"):
+                explicit_fail = True
+                fail_reason = login_res.get("message") or login_res.get("error") or login_res.get("error_type")
+            if login_res.get("error") or login_res.get("error_type"):
+                explicit_fail = True
+                fail_reason = fail_reason or login_res.get("error") or login_res.get("error_type")
+            # common bad password marker
+            msg_lower = (login_res.get("message") or "").lower()
+            if "bad" in msg_lower or "password" in msg_lower:
+                explicit_fail = True
+                fail_reason = fail_reason or login_res.get("message")
+
+        else:
+            # non-dict responses: if no uid was discovered and no medias, treat as ambiguous; prefer success if uid present
+            if not uid:
+                explicit_fail = False
+
+        # Determine authentication success more robustly:
+        is_authenticated = False
+        if explicit_fail:
+            is_authenticated = False
+        else:
+            # If login_res is a dict, check common success indicators
+            if isinstance(login_res, dict):
+                if login_res.get("authenticated") or login_res.get("ok") or str(login_res.get("status") or "").lower() == "ok":
+                    is_authenticated = True
+                elif login_res.get("user_id") or login_res.get("pk"):
+                    is_authenticated = True
+            # If uid was extracted from client runtime, consider authenticated
+            if uid:
+                is_authenticated = True
+            # As last resort, if medias were found, treat as authenticated
+            if medias and len(medias) > 0:
+                is_authenticated = True
+
+        if not is_authenticated:
             fa_msg = translate("login.bad_password", "fa")
             en_msg = translate("login.bad_password", "en")
             if isinstance(login_res, dict):

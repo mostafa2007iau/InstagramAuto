@@ -68,11 +68,14 @@
     <Compile Include="app\routers\comments_router.py" />
     <Compile Include="app\routers\health_router.py" />
     <Compile Include="app\routers\inbound_router.py" />
+    <Compile Include="app\routers\jobs_router.py" />
     <Compile Include="app\routers\logs_router.py" />
     <Compile Include="app\routers\medias_router.py" />
     <Compile Include="app\routers\metrics_router.py" />
     <Compile Include="app\routers\reply_router.py" />
     <Compile Include="app\routers\rules_router.py" />
+    <Compile Include="app\routers\settings_router.py" />
+    <Compile Include="app\routers\stories_router.py" />
     <Compile Include="app\schemas\comment_schema.py" />
     <Compile Include="app\schemas\log_schema.py" />
     <Compile Include="app\schemas\media_schema.py" />

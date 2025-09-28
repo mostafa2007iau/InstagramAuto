@@ -51,10 +51,12 @@
 
             <Button Command="{Binding SaveCommand}" Text="Save Settings" />
 
-            <Label
-                IsVisible="{Binding HasError}"
-                Text="{Binding ErrorMessage}"
-                TextColor="Red" />
+            <!-- Error message and copy button -->
+            <StackLayout IsVisible="{Binding HasError}" BackgroundColor="#fff0f0" Padding="8" Spacing="4">
+                <Label Text="{Binding ErrorMessage}" TextColor="Red" FontAttributes="Bold" />
+                <Button Text="کپی خطا" Clicked="OnCopyErrorClicked" FontSize="12" BackgroundColor="#eee" TextColor="Black" Padding="6,2" HorizontalOptions="End" />
+                <Editor Text="{Binding ErrorDetails}" IsReadOnly="True" AutoSize="TextChanges" HeightRequest="120" FontSize="12" BackgroundColor="#f8f8f8" TextColor="Black" />
+            </StackLayout>
 
         </StackLayout>
     </ScrollView>

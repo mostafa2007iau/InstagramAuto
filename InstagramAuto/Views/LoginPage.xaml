@@ -52,5 +52,16 @@
             Padding="6,2"
             HorizontalOptions="End" />
 
+        <!-- Detailed JSON/Error details (read-only) -->
+        <Editor
+            IsVisible="{Binding HasError}"
+            Text="{Binding ErrorDetails}"
+            IsReadOnly="True"
+            AutoSize="TextChanges"
+            HeightRequest="180"
+            FontSize="12"
+            BackgroundColor="#f8f8f8"
+            TextColor="Black" />
+
     </StackLayout>
 </ContentPage>

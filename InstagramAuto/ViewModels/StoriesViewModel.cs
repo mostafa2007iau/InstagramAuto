@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using InstagramAuto.Client;
+using InstagramAuto.Client.Helpers;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
 using Microsoft.Maui.Controls;
@@ -28,6 +29,7 @@ namespace InstagramAuto.Client.ViewModels
         private string _replyMessage;
         private string _linkUrl;
         private string _imageUrl;
+        private string _errorDetails;
 
         /// <summary>
         /// Persian: لیست استوری‌ها  
@@ -65,6 +67,21 @@ namespace InstagramAuto.Client.ViewModels
                 _errorMessage = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
+            }
+        }
+
+        /// <summary>
+        /// Persian: جزئیات خطا
+        /// English: Error details (full JSON / server response)
+        /// </summary>
+        public string ErrorDetails
+        {
+            get => _errorDetails;
+            set
+            {
+                if (_errorDetails == value) return;
+                _errorDetails = value;
+                OnPropertyChanged();
             }
         }
 
@@ -161,6 +178,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            this.ErrorDetails = string.Empty;
 
             try
             {
@@ -178,7 +196,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                this.ErrorDetails = parsed.Details;
             }
             finally
             {
@@ -197,6 +217,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy || SelectedStory == null) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            this.ErrorDetails = string.Empty;
 
             try
             {
@@ -219,7 +240,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                this.ErrorDetails = parsed.Details;
             }
             finally
             {

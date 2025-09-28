@@ -24,6 +24,9 @@ from app.routers import (
     metrics_router,
     health_router,
     inbound_router,
+    jobs_router,
+    settings_router,
+    stories_router,
 )
 from app.middleware.verbosity_middleware import VerbosityMiddleware, default_rate_limit, strict_rate_limit
 from app.db import init_db
@@ -80,6 +83,9 @@ app.include_router(rules_router.router)
 app.include_router(logs_router.router)
 app.include_router(challenge_router.router)
 app.include_router(challenge_ws_router.router)
+app.include_router(jobs_router.router)
+app.include_router(settings_router.router)
+app.include_router(stories_router.router)
 
 # metrics_router is optional (already have /metrics) but included if exists
 try:

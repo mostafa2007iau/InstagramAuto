@@ -106,16 +106,13 @@ namespace InstagramAuto.Client.ViewModels
                         { "Password",       Password               }
                     };
 
-                    await Shell.Current.GoToAsync(
-                        $"{nameof(Views.ChallengePage)}",
-                        true,
-                        parameters
-                    );
+                    // navigate to named route 'challenge'
+                    await Shell.Current.GoToAsync("challenge", true, parameters);
                 }
                 else
                 {
-                    // لاگین موفق → صفحه‌ی Home
-                    await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
+                    // لاگین موفق → صفحه‌ی Home (use absolute shell route)
+                    await Shell.Current.GoToAsync("///Home");
                 }
             }
             catch (Exception ex)
