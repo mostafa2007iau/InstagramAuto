@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
+using InstagramAuto.Client.Helpers;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -21,6 +22,7 @@ namespace InstagramAuto.Client.ViewModels
         private readonly InstagramAutoClient _apiClient;
         private bool _isBusy;
         private string _errorMessage;
+        private string _errorDetails;
         private string _cursor;
 
         /// <summary>
@@ -50,6 +52,17 @@ namespace InstagramAuto.Client.ViewModels
                 _errorMessage = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
+            }
+        }
+
+        public string ErrorDetails
+        {
+            get => _errorDetails;
+            set
+            {
+                if (_errorDetails == value) return;
+                _errorDetails = value;
+                OnPropertyChanged();
             }
         }
 
@@ -111,6 +124,7 @@ namespace InstagramAuto.Client.ViewModels
             if (IsBusy) return;
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -125,7 +139,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
             finally
             {
@@ -159,7 +175,9 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                var parsed = ErrorHelper.Parse(ex);
+                ErrorMessage = parsed.Message;
+                ErrorDetails = parsed.Details;
             }
         }
     }
