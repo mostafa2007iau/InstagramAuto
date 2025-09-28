@@ -51,6 +51,11 @@ namespace InstagramAuto.Client
             builder.Services.AddTransient<SettingsViewModel>();
             builder.Services.AddTransient<StoriesViewModel>();
             builder.Services.AddTransient<ChallengeViewModel>();
+            builder.Services.AddTransient<CommentsViewModel>();
+            builder.Services.AddTransient<RuleEditorViewModel>();
+            builder.Services.AddTransient<ImportExportViewModel>();
+            builder.Services.AddTransient<LiveActivityViewModel>();
+            builder.Services.AddTransient<StatsViewModel>();
 
             // --- Views (Pages) ---
             builder.Services.AddTransient<LoginPage>();
@@ -62,6 +67,11 @@ namespace InstagramAuto.Client
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<StoriesPage>();
             builder.Services.AddTransient<ChallengePage>();
+            builder.Services.AddTransient<CommentsPage>();
+            builder.Services.AddTransient<RuleEditorPage>();
+            builder.Services.AddTransient<ImportExportPage>();
+            builder.Services.AddTransient<LiveActivityPage>();
+            builder.Services.AddTransient<StatsPage>();
 
             return builder.Build();
         }

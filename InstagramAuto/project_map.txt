@@ -1,0 +1,67 @@
+# Persian/English
+# Frontend (MAUI) Project Map for InstagramAuto
+
+## Pages (Views)
+- LoginPage.xaml / LoginPage.xaml.cs
+- DashboardPage.xaml / DashboardPage.xaml.cs
+- PostsPage.xaml / PostsPage.xaml.cs
+- CommentsPage.xaml / CommentsPage.xaml.cs
+- RuleEditorPage.xaml / RuleEditorPage.xaml.cs
+- SettingsPage.xaml / SettingsPage.xaml.cs
+- LogsPage.xaml / LogsPage.xaml.cs
+- LiveActivityPage.xaml / LiveActivityPage.xaml.cs
+- RuleManagementPage.xaml / RuleManagementPage.xaml.cs
+- StatsPage.xaml / StatsPage.xaml.cs
+- ChallengePage.xaml / ChallengePage.xaml.cs
+- ImportExportPage.xaml / ImportExportPage.xaml.cs
+
+## ViewModels
+- LoginViewModel
+- DashboardViewModel
+- PostsViewModel
+- CommentsViewModel
+- RuleEditorViewModel
+- SettingsViewModel
+- LogsViewModel
+- LiveActivityViewModel
+- RuleManagementViewModel
+- StatsViewModel
+- ChallengeViewModel
+- ImportExportViewModel
+
+## Services
+- AuthService
+- ApiService (wraps all REST calls)
+- SessionService
+- RuleService
+- CommentService
+- ReplyService
+- DMService
+- SettingsService
+- LogService
+- ProxyService
+- ImportExportService
+
+## Models
+- AccountSession
+- MediaItem
+- CommentItem
+- RuleItem
+- SettingsItem
+- LogItem
+- ProxyItem
+- StatItem
+
+## Features
+- Multi-account management
+- Rule CRUD, import/export (CSV/JSON)
+- Comment/reply/DM management
+- Per-account and global settings
+- Proxy support
+- Challenge/2FA UI
+- Live logs/activity
+- Stats and analytics
+- Persian/English summaries and comments
+
+# ???? ????? ????? (MAUI)
+# ?????? ?????????? ???????? ? ??????? ???? ???? ???? ????? ???? ?? API

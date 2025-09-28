@@ -1,7 +1,6 @@
 ﻿// File: ViewModels/StoriesViewModel.cs
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -18,7 +17,7 @@ namespace InstagramAuto.Client.ViewModels
     /// English:
     ///   ViewModel for StoriesPage to load and auto-reply to stories.
     /// </summary>
-    public class StoriesViewModel : INotifyPropertyChanged
+    public class StoriesViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
         private readonly InstagramAutoClient _apiClient;
@@ -29,8 +28,6 @@ namespace InstagramAuto.Client.ViewModels
         private string _replyMessage;
         private string _linkUrl;
         private string _imageUrl;
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
         /// Persian: لیست استوری‌ها  
@@ -49,7 +46,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
+                OnPropertyChanged();
                 ((Command)LoadCommand).ChangeCanExecute();
                 ((Command)ReplyCommand).ChangeCanExecute();
             }
@@ -66,7 +63,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_errorMessage == value) return;
                 _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
             }
         }
@@ -88,7 +85,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_selectedStory == value) return;
                 _selectedStory = value;
-                OnPropertyChanged(nameof(SelectedStory));
+                OnPropertyChanged();
                 ((Command)ReplyCommand).ChangeCanExecute();
             }
         }
@@ -104,7 +101,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_replyMessage == value) return;
                 _replyMessage = value;
-                OnPropertyChanged(nameof(ReplyMessage));
+                OnPropertyChanged();
                 ((Command)ReplyCommand).ChangeCanExecute();
             }
         }
@@ -116,7 +113,7 @@ namespace InstagramAuto.Client.ViewModels
         public string LinkUrl
         {
             get => _linkUrl;
-            set { if (_linkUrl == value) return; _linkUrl = value; OnPropertyChanged(nameof(LinkUrl)); }
+            set { if (_linkUrl == value) return; _linkUrl = value; OnPropertyChanged(); }
         }
 
         /// <summary>
@@ -126,7 +123,7 @@ namespace InstagramAuto.Client.ViewModels
         public string ImageUrl
         {
             get => _imageUrl;
-            set { if (_imageUrl == value) return; _imageUrl = value; OnPropertyChanged(nameof(ImageUrl)); }
+            set { if (_imageUrl == value) return; _imageUrl = value; OnPropertyChanged(); }
         }
 
         /// <summary>
@@ -229,8 +226,5 @@ namespace InstagramAuto.Client.ViewModels
                 IsBusy = false;
             }
         }
-
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

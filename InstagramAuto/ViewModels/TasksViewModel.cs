@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -16,15 +15,13 @@ namespace InstagramAuto.Client.ViewModels
     /// English:
     ///   ViewModel for TasksPage to display and manage queue jobs.
     /// </summary>
-    public class TasksViewModel : INotifyPropertyChanged
+    public class TasksViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
         private readonly InstagramAutoClient _apiClient;
         private bool _isBusy;
         private string _errorMessage;
         private string _cursor;
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
         /// Persian: لیست وظایف صف  
@@ -39,7 +36,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
+                OnPropertyChanged();
                 ((Command)LoadMoreCommand).ChangeCanExecute();
             }
         }
@@ -51,7 +48,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_errorMessage == value) return;
                 _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
             }
         }
@@ -165,8 +162,5 @@ namespace InstagramAuto.Client.ViewModels
                 ErrorMessage = ex.Message;
             }
         }
-
-        protected void OnPropertyChanged(string n) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
     }
 }

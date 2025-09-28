@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Persian:
+    ???? ?????? ? ????? ????? ?????? ? ??????.
+English:
+    Page for editing and defining reply/DM rules.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="InstagramAuto.Client.Views.RuleEditorPage"
+             Title="Rule Editor">
+    <ScrollView>
+        <StackLayout Padding="16" Spacing="12">
+            <Label Text="?????? ????? / Edit Rule" FontSize="22" HorizontalOptions="Center" />
+            <Entry Placeholder="??? ????? / Rule Name" Text="{Binding Name}" />
+            <Editor Placeholder="??? (JSONLogic) / Condition (JSONLogic)" HeightRequest="80" Text="{Binding Condition}" />
+            <Label Text="??????? (?? ?? ?? ????) / Replies (one per line)" />
+            <Editor HeightRequest="80" Text="{Binding RepliesText}" />
+            <Switch IsToggled="{Binding SendDM}" />
+            <Label Text="????????? (?? ?? ?? ????) / DMs (one per line)" />
+            <Editor HeightRequest="80" Text="{Binding DMsText}" />
+            <Switch IsToggled="{Binding Enabled}" />
+            <Label Text="???? / Enabled" />
+            <Button Text="????? / Save" Command="{Binding SaveCommand}" />
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding HasError}" />
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

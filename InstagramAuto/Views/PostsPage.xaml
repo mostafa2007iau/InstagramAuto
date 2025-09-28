@@ -26,7 +26,9 @@
             Margin="10"
             ItemsSource="{Binding Items}"
             RemainingItemsThreshold="5"
-            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
+            SelectionMode="Single"
+            SelectionChanged="OnPostSelected">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame

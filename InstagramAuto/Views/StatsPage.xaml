@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Persian:
+    ???? ????? ???? ?????????? ????/?????? ???? ?? ???.
+English:
+    Page for displaying stats of successful/failed replies per post.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="InstagramAuto.Client.Views.StatsPage"
+             Title="Stats">
+    <StackLayout Padding="16" Spacing="10">
+        <Label Text="???? ????????? / Reply Stats" FontSize="22" HorizontalOptions="Center" />
+        <CollectionView ItemsSource="{Binding Items}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="5" Padding="8" BorderColor="Gray">
+                        <StackLayout>
+                            <Label Text="{Binding PostCaption}" FontSize="14" />
+                            <Label Text="????: {Binding SuccessCount} | ??????: {Binding FailCount}" FontSize="12" />
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="???????? ???? / Refresh" Command="{Binding RefreshCommand}" />
+        <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding HasError}" />
+    </StackLayout>
+</ContentPage>

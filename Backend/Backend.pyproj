@@ -34,6 +34,8 @@
     <Folder Include="app\utils\" />
     <Folder Include=".github\" />
     <Folder Include="scripts\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\integration\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".github\workflows\ci.yml" />
@@ -54,6 +56,7 @@
     <Compile Include="app\main.py" />
     <Compile Include="app\middleware\verbosity_middleware.py" />
     <Compile Include="app\models\account_model.py" />
+    <Compile Include="app\models\comment_model.py" />
     <Compile Include="app\models\job_model.py" />
     <Compile Include="app\models\log_model.py" />
     <Compile Include="app\models\rule_model.py" />
@@ -62,12 +65,15 @@
     <Compile Include="app\routers\accounts_router.py" />
     <Compile Include="app\routers\challenge_router.py" />
     <Compile Include="app\routers\challenge_ws_router.py" />
+    <Compile Include="app\routers\comments_router.py" />
     <Compile Include="app\routers\health_router.py" />
     <Compile Include="app\routers\inbound_router.py" />
     <Compile Include="app\routers\logs_router.py" />
     <Compile Include="app\routers\medias_router.py" />
     <Compile Include="app\routers\metrics_router.py" />
+    <Compile Include="app\routers\reply_router.py" />
     <Compile Include="app\routers\rules_router.py" />
+    <Compile Include="app\schemas\comment_schema.py" />
     <Compile Include="app\schemas\log_schema.py" />
     <Compile Include="app\schemas\media_schema.py" />
     <Compile Include="app\schemas\pagination_schema.py" />
@@ -75,10 +81,14 @@
     <Compile Include="app\schemas\session_schema.py" />
     <Compile Include="app\services\challenge_manager.py" />
     <Compile Include="app\services\challenge_store_redis.py" />
+    <Compile Include="app\services\comment_monitor_service.py" />
+    <Compile Include="app\services\dm_service.py" />
     <Compile Include="app\services\insta_client_factory.py" />
     <Compile Include="app\services\insta_login_handler.py" />
     <Compile Include="app\services\proxy_service.py" />
+    <Compile Include="app\services\reply_service.py" />
     <Compile Include="app\services\rules_engine.py" />
+    <Compile Include="app\services\rule_engine.py" />
     <Compile Include="app\services\sender_queue.py" />
     <Compile Include="app\services\sender_worker.py" />
     <Compile Include="app\services\session_manager.py" />
@@ -99,6 +109,8 @@
     <Compile Include="app\utils\secure_cursor.py" />
     <Compile Include="openapi_gen.py" />
     <Compile Include="scripts\precommit_check_summaries.py" />
+    <Compile Include="tests\integration\test_comment_monitor.py" />
+    <Compile Include="tests\sample_data.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

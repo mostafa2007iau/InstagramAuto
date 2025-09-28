@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
@@ -14,7 +13,7 @@ namespace InstagramAuto.Client.ViewModels
     /// English:
     ///   ViewModel for SettingsPage to view and edit rate-limits and human-like behavior.
     /// </summary>
-    public class SettingsViewModel : INotifyPropertyChanged
+    public class SettingsViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
         private readonly InstagramAutoClient _apiClient;
@@ -30,8 +29,6 @@ namespace InstagramAuto.Client.ViewModels
         private bool _isBusy;
         private string _errorMessage;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         /// <summary>  
         /// Persian: فعال‌سازی تأخیر بین اکشن‌ها  
         /// English: Enable delay between actions  
@@ -39,7 +36,7 @@ namespace InstagramAuto.Client.ViewModels
         public bool EnableDelay
         {
             get => _enableDelay;
-            set { if (_enableDelay == value) return; _enableDelay = value; OnPropertyChanged(nameof(EnableDelay)); }
+            set { if (_enableDelay == value) return; _enableDelay = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -49,7 +46,7 @@ namespace InstagramAuto.Client.ViewModels
         public int CommentDelay
         {
             get => _commentDelay;
-            set { if (_commentDelay == value) return; _commentDelay = value; OnPropertyChanged(nameof(CommentDelay)); }
+            set { if (_commentDelay == value) return; _commentDelay = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -59,7 +56,7 @@ namespace InstagramAuto.Client.ViewModels
         public int LikeDelay
         {
             get => _likeDelay;
-            set { if (_likeDelay == value) return; _likeDelay = value; OnPropertyChanged(nameof(LikeDelay)); }
+            set { if (_likeDelay == value) return; _likeDelay = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -69,7 +66,7 @@ namespace InstagramAuto.Client.ViewModels
         public int DmDelay
         {
             get => _dmDelay;
-            set { if (_dmDelay == value) return; _dmDelay = value; OnPropertyChanged(nameof(DmDelay)); }
+            set { if (_dmDelay == value) return; _dmDelay = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -79,7 +76,7 @@ namespace InstagramAuto.Client.ViewModels
         public int HourlyLimit
         {
             get => _hourlyLimit;
-            set { if (_hourlyLimit == value) return; _hourlyLimit = value; OnPropertyChanged(nameof(HourlyLimit)); }
+            set { if (_hourlyLimit == value) return; _hourlyLimit = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -89,7 +86,7 @@ namespace InstagramAuto.Client.ViewModels
         public int DailyLimit
         {
             get => _dailyLimit;
-            set { if (_dailyLimit == value) return; _dailyLimit = value; OnPropertyChanged(nameof(DailyLimit)); }
+            set { if (_dailyLimit == value) return; _dailyLimit = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -99,7 +96,7 @@ namespace InstagramAuto.Client.ViewModels
         public bool RandomJitter
         {
             get => _randomJitter;
-            set { if (_randomJitter == value) return; _randomJitter = value; OnPropertyChanged(nameof(RandomJitter)); }
+            set { if (_randomJitter == value) return; _randomJitter = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -109,7 +106,7 @@ namespace InstagramAuto.Client.ViewModels
         public int JitterMin
         {
             get => _jitterMin;
-            set { if (_jitterMin == value) return; _jitterMin = value; OnPropertyChanged(nameof(JitterMin)); }
+            set { if (_jitterMin == value) return; _jitterMin = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -119,7 +116,7 @@ namespace InstagramAuto.Client.ViewModels
         public int JitterMax
         {
             get => _jitterMax;
-            set { if (_jitterMax == value) return; _jitterMax = value; OnPropertyChanged(nameof(JitterMax)); }
+            set { if (_jitterMax == value) return; _jitterMax = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -133,7 +130,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
+                OnPropertyChanged();
                 ((Command)LoadCommand).ChangeCanExecute();
                 ((Command)SaveCommand).ChangeCanExecute();
             }
@@ -150,7 +147,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_errorMessage == value) return;
                 _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
             }
         }
@@ -261,8 +258,5 @@ namespace InstagramAuto.Client.ViewModels
                 IsBusy = false;
             }
         }
-
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

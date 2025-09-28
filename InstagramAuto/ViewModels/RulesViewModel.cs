@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -16,10 +15,9 @@ namespace InstagramAuto.Client.ViewModels
     /// English:
     ///   ViewModel for RulesPage to manage automatic comment/DM rules.
     /// </summary>
-    public class RulesViewModel : INotifyPropertyChanged
+    public class RulesViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
-        private readonly IInstagramAutoClient _apiClient;
         private bool _isBusy;
         private string _errorMessage;
         private string _cursor;
@@ -27,8 +25,6 @@ namespace InstagramAuto.Client.ViewModels
         private string _newName;
         private string _newExpression;
         private bool _newEnabled = true;
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<RuleOut> Rules { get; } = new ObservableCollection<RuleOut>();
 
@@ -39,7 +35,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
+                OnPropertyChanged();
                 ((Command)LoadCommand).ChangeCanExecute();
                 ((Command)CreateCommand).ChangeCanExecute();
             }
@@ -52,7 +48,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_errorMessage == value) return;
                 _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
             }
         }
@@ -66,7 +62,7 @@ namespace InstagramAuto.Client.ViewModels
         public string NewName
         {
             get => _newName;
-            set { if (_newName == value) return; _newName = value; OnPropertyChanged(nameof(NewName)); }
+            set { if (_newName == value) return; _newName = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -76,7 +72,7 @@ namespace InstagramAuto.Client.ViewModels
         public string NewExpression
         {
             get => _newExpression;
-            set { if (_newExpression == value) return; _newExpression = value; OnPropertyChanged(nameof(NewExpression)); }
+            set { if (_newExpression == value) return; _newExpression = value; OnPropertyChanged(); }
         }
 
         /// <summary>  
@@ -86,16 +82,15 @@ namespace InstagramAuto.Client.ViewModels
         public bool NewEnabled
         {
             get => _newEnabled;
-            set { if (_newEnabled == value) return; _newEnabled = value; OnPropertyChanged(nameof(NewEnabled)); }
+            set { if (_newEnabled == value) return; _newEnabled = value; OnPropertyChanged(); }
         }
 
         public ICommand LoadCommand { get; }
         public ICommand CreateCommand { get; }
 
-        public RulesViewModel(IAuthService authService, IInstagramAutoClient apiClient)
+        public RulesViewModel(IAuthService authService)
         {
             _authService = authService;
-            _apiClient = apiClient;
 
             LoadCommand = new Command(async () => await LoadRulesAsync(), () => !IsBusy);
             CreateCommand = new Command(async () => await CreateRuleAsync(), () => !IsBusy);
@@ -116,8 +111,7 @@ namespace InstagramAuto.Client.ViewModels
             try
             {
                 var session = await _authService.LoadSessionAsync();
-                var page = await _apiClient.RulesGETAsync(
-                    session.AccountId, limit: 50, cursor: _cursor);
+                var page = await _authService.GetRulesAsync(session.AccountId, 50, _cursor);
 
                 foreach (var rule in page.Items)
                     if (!Rules.Any(r => r.Id == rule.Id))
@@ -164,7 +158,7 @@ namespace InstagramAuto.Client.ViewModels
                     Enabled = NewEnabled
                 };
 
-                await _apiClient.RulesPOSTAsync(ruleIn);
+                await _authService.CreateRuleAsync(ruleIn);
 
                 // ریست فرم
                 NewName = string.Empty;
@@ -185,8 +179,5 @@ namespace InstagramAuto.Client.ViewModels
                 IsBusy = false;
             }
         }
-
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

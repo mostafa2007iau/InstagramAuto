@@ -19,5 +19,17 @@ namespace InstagramAuto.Client.Views
                     await ViewModel.LoadMoreAsync();
             };
         }
+
+        // Persian:
+        //   هندل انتخاب پست و ناوبری به صفحه کامنت‌ها
+        // English:
+        //   Handle post selection and navigate to CommentsPage
+        private async void OnPostSelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.Count > 0 && e.CurrentSelection[0] is MediaItem post)
+            {
+                await ViewModel.GoToCommentsAsync(post);
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -16,15 +15,13 @@ namespace InstagramAuto.Client.ViewModels
     /// English:
     ///   ViewModel for PostsPage that loads and exposes media items.
     /// </summary>
-    public class PostsViewModel : INotifyPropertyChanged
+    public class PostsViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
         private readonly IInstagramAutoClient _apiClient;
         private bool _isBusy;
         private string _errorMessage;
         private string _cursor;
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
         /// Persian: مجموعه‌ای قابل مشاهده از آیتم‌های مدیا  
@@ -43,7 +40,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
+                OnPropertyChanged();
                 ((Command)LoadMoreCommand).ChangeCanExecute();
             }
         }
@@ -59,7 +56,7 @@ namespace InstagramAuto.Client.ViewModels
             {
                 if (_errorMessage == value) return;
                 _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(HasError));
             }
         }
@@ -130,7 +127,14 @@ namespace InstagramAuto.Client.ViewModels
             }
         }
 
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        // Persian:
+        //   ناوبری به صفحه کامنت‌های پست انتخاب‌شده
+        // English:
+        //   Navigate to CommentsPage for selected post
+        public async Task GoToCommentsAsync(MediaItem post)
+        {
+            if (post == null) return;
+            await Shell.Current.GoToAsync($"CommentsPage?mediaId={post.Id}");
+        }
     }
 }
