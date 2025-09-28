@@ -13,6 +13,7 @@ from typing import Dict
 from app.services import challenge_store_redis as store
 from app.middleware.verbosity_middleware import default_rate_limit, strict_rate_limit
 from app.deps import get_locale
+from app.i18n import translate
 
 router = APIRouter(prefix="/api/challenge", tags=["challenge"])
 
@@ -20,7 +21,11 @@ router = APIRouter(prefix="/api/challenge", tags=["challenge"])
 async def get_challenge_state(token: str):
     st = await store.get_challenge(token)
     if not st:
-        raise HTTPException(status_code=404, detail="challenge not found or expired")
+        raise HTTPException(status_code=404, detail={
+            "message": translate("unknown.error", "fa"),
+            "message_en": translate("unknown.error", "en"),
+            "error_detail": "challenge not found or expired"
+        })
     return {"ok": True, "state": st}
 
 @router.post("/{token}/resolve", summary="Resolve challenge / حل چالش", description="Resolve challenge by submitting response (e.g., code) / حل چالش با ارسال پاسخ (مثلا کد)")
@@ -28,7 +33,11 @@ async def post_resolve_challenge(token: str, payload: Dict = Body(...), _rl=Depe
     try:
         res = await store.resolve_challenge(token, payload)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail={
+            "message": translate("unknown.error", "fa"),
+            "message_en": translate("unknown.error", "en"),
+            "error_detail": str(e)
+        })
     return {"ok": True, "result": res}
 
 # Convenience endpoint to create a challenge (protected; mainly for testing)
@@ -37,5 +46,13 @@ async def create_challenge_endpoint(payload: Dict = Body(...), _rl=Depends(defau
     session_id = payload.get("session_id")
     ch_type = payload.get("type", "challenge")
     data = payload.get("payload", {})
-    token = await store.create_challenge(session_id, ch_type, data)
+    try:
+        token = await store.create_challenge(session_id, ch_type, data)
+    except Exception as e:
+        return {
+            "ok": False,
+            "message": translate("unknown.error", "fa"),
+            "message_en": translate("unknown.error", "en"),
+            "error_detail": str(e)
+        }
     return {"ok": True, "token": token}

@@ -61,26 +61,31 @@ async def login_and_probe(
     # 1) اعتبارسنجی سشن
     meta = await session_manager.get_session(session_id)
     if not meta:
-        raise HTTPException(status_code=404, detail="session not found")
+        raise HTTPException(status_code=404, detail={
+            "message": translate("session.not_found", "fa"),
+            "message_en": translate("session.not_found", "en"),
+            "error_detail": "session not found"
+        })
 
-    # 2) لاگین و پروب
-    result = await session_manager.login_and_probe(session_id, username, password)
-    log_obj = format_log(str(result), verbosity, locale)
+    try:
+        # 2) لاگین و پروب
+        result = await session_manager.login_and_probe(session_id, username, password)
+        log_obj = format_log(str(result), verbosity, locale)
+    except Exception as e:
+        return {
+            "ok": False,
+            "message": translate("unknown.error", "fa"),
+            "message_en": translate("unknown.error", "en"),
+            "error_detail": str(e)
+        }
 
     # 3) اگر اینستاگرام درخواست challenge داده
-    if not getattr(result, "ok", False) and getattr(result, "status", None) == "challenge_required":
-        # آماده‌سازی payload برای UI (مثلا شماره یا ایمیل ماسک‌شده)
+    if not result.get("ok", False) and result.get("challenge_required", False):
         payload: Dict[str, Any] = {
-            "challenge_type": getattr(result, "challenge_type", None),
-            "mask": getattr(result, "challenge_mask", None)
+            "challenge_type": result.get("challenge_type"),
+            "mask": result.get("challenge_mask")
         }
-        # تولید توکن چالش و ذخیره در Redis
-        token = await create_challenge(
-            session_id=session_id,
-            ch_type="challenge",
-            payload=payload
-        )
-        # پاسخ حاوی نتیجه اولیه، لاگ و اطلاعات چالش
+        token = result.get("challenge_token")
         return {
             "result": result,
             "log": log_obj,
@@ -88,7 +93,18 @@ async def login_and_probe(
             "challenge_payload": payload
         }
 
-    # 4) در حالت معمول (یا خطای دیگر) همان خروجی قبلی را برگردان
+    # 4) اگر لاگین موفق نبود، پیام خطا را با جزییات و دو زبانه برگردان
+    if not result.get("ok", False):
+        return {
+            "result": result,
+            "log": log_obj,
+            "message": result.get("message"),
+            "message_en": result.get("message_en"),
+            "login_result": result.get("login_result"),
+            "error_detail": result.get("error_detail")
+        }
+
+    # 5) در حالت موفق همان خروجی قبلی را برگردان
     return {"result": result, "log": log_obj}
 
 

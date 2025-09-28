@@ -41,5 +41,16 @@
             Text="{Binding ErrorMessage}"
             TextColor="Red" />
 
+        <!-- Copy error button, only visible if there is an error -->
+        <Button
+            Text="Copy Error"
+            IsVisible="{Binding HasError}"
+            Clicked="OnCopyErrorClicked"
+            BackgroundColor="#eee"
+            TextColor="Black"
+            FontSize="12"
+            Padding="6,2"
+            HorizontalOptions="End" />
+
     </StackLayout>
 </ContentPage>

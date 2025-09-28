@@ -37,10 +37,28 @@ namespace InstagramAuto.Client.Services
             });
 
             // 2) لاگین
-            var login = await _client.LoginAsync(sessionMeta.Id, username, password);
+            var loginResponse = await _client.LoginAsync(sessionMeta.Id, username, password);
 
-            // 3) اگر Ok است
-            if (login?.Result?.Ok == true)
+            // 3) بررسی چالش در پاسخ ریشه یا نتیجه
+            var challengeToken = loginResponse.AdditionalProperties != null && loginResponse.AdditionalProperties.ContainsKey("challenge_token")
+                ? loginResponse.AdditionalProperties["challenge_token"]?.ToString()
+                : null;
+            var challengeRequired = loginResponse.AdditionalProperties != null && loginResponse.AdditionalProperties.ContainsKey("challenge_required")
+                ? (bool?)loginResponse.AdditionalProperties["challenge_required"] == true
+                : false;
+
+            if (challengeRequired || !string.IsNullOrEmpty(challengeToken))
+            {
+                // ناوبری به ChallengePage با توکن و مدارک ورود
+                var route = $"challenge?ChallengeToken={challengeToken ?? sessionMeta.Id}"
+                          + $"&Username={Uri.EscapeDataString(username)}"
+                          + $"&Password={Uri.EscapeDataString(password)}";
+                await Shell.Current.GoToAsync(route);
+                return new AccountSession { ChallengeToken = challengeToken ?? sessionMeta.Id, Id = sessionMeta.Id, AccountId = sessionMeta.Account_id };
+            }
+
+            // 4) اگر Ok است
+            if (loginResponse?.Result?.Ok == true)
             {
                 _cachedSession = new AccountSession
                 {
@@ -53,18 +71,14 @@ namespace InstagramAuto.Client.Services
                 return _cachedSession;
             }
 
-            // 4) اگر نیاز به چالش است → ناوبری به صفحه‌ی ChallengePage
-            if (login?.Result?.Challenge != null)
-            {
-                // توجه کنید پارامترها باید با QueryPropertyهای ChallengePage یکی باشند
-                var route = $"challenge?ChallengeToken={sessionMeta.Id}"
-                          + $"&Username={Uri.EscapeDataString(username)}"
-                          + $"&Password={Uri.EscapeDataString(password)}";
-                await Shell.Current.GoToAsync(route);
-                return null;
-            }
-
-            throw new Exception("Login failed: neither success nor challenge.");
+            // نمایش جزئیات خطا به صورت فارسی و انگلیسی (در صورت وجود)
+            var faMsg = loginResponse?.Result?.Message;
+            var enMsg = loginResponse?.Result?.AdditionalProperties != null && loginResponse.Result.AdditionalProperties.ContainsKey("message_en")
+                ? loginResponse.Result.AdditionalProperties["message_en"]?.ToString()
+                : null;
+            var errorDetails = Newtonsoft.Json.JsonConvert.SerializeObject(loginResponse);
+            var msg = $"ورود ناموفق: نه موفقیت و نه چالش.\nFA: {faMsg}\nEN: {enMsg}\nDetails: {errorDetails}";
+            throw new Exception(msg);
         }
 
         public async Task<AccountSession> LoadSessionAsync()
@@ -78,7 +92,7 @@ namespace InstagramAuto.Client.Services
             if (!string.IsNullOrEmpty(_lastUsername) && !string.IsNullOrEmpty(_lastPassword))
                 return await LoginAsync(_lastUsername, _lastPassword);
 
-            throw new InvalidOperationException("No session cached and no credentials available.");
+            throw new InvalidOperationException("هیچ سشنی کش نشده و هیچ مدرکی در دسترس نیست.");
         }
 
         public async Task SaveSessionAsync(AccountSession session)

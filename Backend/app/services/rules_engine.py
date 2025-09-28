@@ -14,6 +14,31 @@ from app.services.sender_queue import enqueue_send
 from json_logic import jsonLogic
 import ast
 
+def evaluate_rules_for_event(event: Dict[str, Any]) -> list:
+    """
+    Persian:
+        رویداد را روی همه قواعد فعال حساب اجرا می‌کند و لیست rule_idهایی که match شدند را برمی‌گرداند.
+    English:
+        Evaluates the event against all active rules for the account and returns a list of matched rule_ids.
+    """
+    account_id = event.get("account_id")
+    matched = []
+    if not account_id:
+        return matched
+    with Session(engine) as db:
+        statement = select(Rule).where(Rule.account_id == account_id, Rule.enabled == True)
+        rules = db.exec(statement).all()
+    for r in rules:
+        try:
+            expr = __import__("json").loads(r.expression)
+        except Exception:
+            continue
+        if evaluate_expression_jsonlogic(expr, event):
+            matched.append(r.id)
+            action = {"session_id": event.get("session_id"), "rule_id": r.id, "event": event}
+            enqueue_send(action)
+    return matched
+
 def evaluate_expression_jsonlogic(expression: Dict[str, Any], context: Dict[str, Any]) -> bool:
     """
     Persian:
