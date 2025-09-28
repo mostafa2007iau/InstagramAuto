@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Settings">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+
+            <Label
+                FontAttributes="Bold"
+                FontSize="18"
+                Text="Delay and Rate Limit Settings" />
+
+            <StackLayout Orientation="Horizontal" VerticalOptions="Center">
+                <Label Text="Enable Delay" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding EnableDelay}" />
+            </StackLayout>
+
+            <StackLayout Padding="0,10">
+                <Label Text="Comment Delay (sec)" />
+                <Stepper
+                    Increment="1"
+                    Maximum="60"
+                    Minimum="0"
+                    Value="{Binding CommentDelay}" />
+                <Label HorizontalOptions="Center" Text="{Binding CommentDelay, StringFormat='{}{0} sec'}" />
+            </StackLayout>
+
+            <StackLayout Padding="0,10">
+                <Label Text="Like Delay (sec)" />
+                <Stepper
+                    Increment="1"
+                    Maximum="60"
+                    Minimum="0"
+                    Value="{Binding LikeDelay}" />
+                <Label HorizontalOptions="Center" Text="{Binding LikeDelay, StringFormat='{}{0} sec'}" />
+            </StackLayout>
+
+            <StackLayout Padding="0,10">
+                <Label Text="DM Delay (sec)" />
+                <Stepper
+                    Increment="1"
+                    Maximum="60"
+                    Minimum="0"
+                    Value="{Binding DmDelay}" />
+                <Label HorizontalOptions="Center" Text="{Binding DmDelay, StringFormat='{}{0} sec'}" />
+            </StackLayout>
+
+            <Button Command="{Binding SaveCommand}" Text="Save Settings" />
+
+            <Label
+                IsVisible="{Binding HasError}"
+                Text="{Binding ErrorMessage}"
+                TextColor="Red" />
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

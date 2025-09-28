@@ -1,0 +1,192 @@
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Microsoft.Maui.Controls;
+using InstagramAuto.Client.Models;
+using InstagramAuto.Client.Services;
+
+namespace InstagramAuto.Client.ViewModels
+{
+    /// <summary>
+    /// Persian:
+    ///   ویومدل صفحه Rules برای مدیریت قاعده‌های خودکار کامنت/دایرکت.
+    /// English:
+    ///   ViewModel for RulesPage to manage automatic comment/DM rules.
+    /// </summary>
+    public class RulesViewModel : INotifyPropertyChanged
+    {
+        private readonly IAuthService _authService;
+        private readonly IInstagramAutoClient _apiClient;
+        private bool _isBusy;
+        private string _errorMessage;
+        private string _cursor;
+
+        private string _newName;
+        private string _newExpression;
+        private bool _newEnabled = true;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ObservableCollection<RuleOut> Rules { get; } = new ObservableCollection<RuleOut>();
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
+                ((Command)LoadCommand).ChangeCanExecute();
+                ((Command)CreateCommand).ChangeCanExecute();
+            }
+        }
+
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                if (_errorMessage == value) return;
+                _errorMessage = value;
+                OnPropertyChanged(nameof(ErrorMessage));
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
+
+        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+        /// <summary>  
+        /// Persian: نام قاعده جدید  
+        /// English: New rule name  
+        /// </summary>
+        public string NewName
+        {
+            get => _newName;
+            set { if (_newName == value) return; _newName = value; OnPropertyChanged(nameof(NewName)); }
+        }
+
+        /// <summary>  
+        /// Persian: عبارت JSON-Logic  
+        /// English: JSON-Logic expression  
+        /// </summary>
+        public string NewExpression
+        {
+            get => _newExpression;
+            set { if (_newExpression == value) return; _newExpression = value; OnPropertyChanged(nameof(NewExpression)); }
+        }
+
+        /// <summary>  
+        /// Persian: وضعیت فعال‌بودن قاعده  
+        /// English: Whether the rule is enabled  
+        /// </summary>
+        public bool NewEnabled
+        {
+            get => _newEnabled;
+            set { if (_newEnabled == value) return; _newEnabled = value; OnPropertyChanged(nameof(NewEnabled)); }
+        }
+
+        public ICommand LoadCommand { get; }
+        public ICommand CreateCommand { get; }
+
+        public RulesViewModel(IAuthService authService, IInstagramAutoClient apiClient)
+        {
+            _authService = authService;
+            _apiClient = apiClient;
+
+            LoadCommand = new Command(async () => await LoadRulesAsync(), () => !IsBusy);
+            CreateCommand = new Command(async () => await CreateRuleAsync(), () => !IsBusy);
+        }
+
+        /// <summary>
+        /// Persian:
+        ///   بارگذاری فهرست قاعده‌ها از API.
+        /// English:
+        ///   Loads the list of rules from the API.
+        /// </summary>
+        public async Task LoadRulesAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            try
+            {
+                var session = await _authService.LoadSessionAsync();
+                var page = await _apiClient.RulesGETAsync(
+                    session.AccountId, limit: 50, cursor: _cursor);
+
+                foreach (var rule in page.Items)
+                    if (!Rules.Any(r => r.Id == rule.Id))
+                        Rules.Add(rule);
+
+                _cursor = page.Meta.Next_cursor;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// Persian:
+        ///   ایجاد یک قاعدهٔ جدید با داده‌های فرم و رفرش فهرست.
+        /// English:
+        ///   Creates a new rule using form data and refreshes the list.
+        /// </summary>
+        public async Task CreateRuleAsync()
+        {
+            if (IsBusy) return;
+            if (string.IsNullOrWhiteSpace(NewName) || string.IsNullOrWhiteSpace(NewExpression))
+            {
+                ErrorMessage = "Name and expression cannot be empty.";
+                return;
+            }
+
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            try
+            {
+                var session = await _authService.LoadSessionAsync();
+                var ruleIn = new RuleIn
+                {
+                    Account_id = session.AccountId,
+                    Name = NewName,
+                    Expression = NewExpression,
+                    Enabled = NewEnabled
+                };
+
+                await _apiClient.RulesPOSTAsync(ruleIn);
+
+                // ریست فرم
+                NewName = string.Empty;
+                NewExpression = string.Empty;
+                NewEnabled = true;
+
+                // ریست صفحه و بارگذاری دوباره
+                Rules.Clear();
+                _cursor = null;
+                await LoadRulesAsync();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+}

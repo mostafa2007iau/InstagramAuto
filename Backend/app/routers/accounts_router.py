@@ -1,25 +1,39 @@
-﻿"""
+﻿# app/routers/accounts_router.py
+
+"""
 Persian:
     Accounts router با محافظت rate-limit برای عملیات حساس (create, login, export, import, delete).
-
+    افزوده شدن پشتیبانی از challenge به لاگین.
 English:
     Accounts router with rate-limit protection for sensitive operations.
+    Added challenge support to login.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from typing import Dict
+from typing import Dict, Any
 from app.schemas.session_schema import SessionCreateIn, SessionOut
 from app.deps import get_session_manager, get_locale, get_client_log_verbosity
 from app.services.session_manager import SessionManager
 from app.services.proxy_service import test_proxy
+from app.services.challenge_store_redis import create_challenge
 from app.i18n import translate
 from app.logging_utils import format_log
 from app.middleware.verbosity_middleware import default_rate_limit, strict_rate_limit
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
 
-@router.post("/sessions", response_model=SessionOut, summary="Create session / ایجاد سشن", description="Create a session metadata record / ساخت رکورد متادیتای سشن")
-async def create_session(payload: SessionCreateIn, session_manager: SessionManager = Depends(get_session_manager), _rl=Depends(default_rate_limit)):
+
+@router.post(
+    "/sessions",
+    response_model=SessionOut,
+    summary="Create session / ایجاد سشن",
+    description="Create a session metadata record / ساخت رکورد متادیتای سشن"
+)
+async def create_session(
+    payload: SessionCreateIn,
+    session_manager: SessionManager = Depends(get_session_manager),
+    _rl=Depends(default_rate_limit)
+):
     meta = await session_manager.create_session(
         account_id=payload.account_id,
         proxy=payload.proxy,
@@ -28,24 +42,86 @@ async def create_session(payload: SessionCreateIn, session_manager: SessionManag
     )
     return meta
 
-@router.post("/sessions/{session_id}/login", summary="Login and probe / ورود و پروب", description="Perform login and mandatory media probe / انجام لاگین و پروب اجباری مدیا")
-async def login_and_probe(session_id: str, request: Request, username: str, password: str, session_manager: SessionManager = Depends(get_session_manager), locale: str = Depends(get_locale), verbosity = Depends(get_client_log_verbosity), _rl=Depends(default_rate_limit)):
+
+@router.post(
+    "/sessions/{session_id}/login",
+    summary="Login and probe / ورود و پروب",
+    description="Perform login and mandatory media probe / انجام لاگین و پروب اجباری مدیا"
+)
+async def login_and_probe(
+    session_id: str,
+    request: Request,
+    username: str,
+    password: str,
+    session_manager: SessionManager = Depends(get_session_manager),
+    locale: str = Depends(get_locale),
+    verbosity = Depends(get_client_log_verbosity),
+    _rl=Depends(default_rate_limit)
+):
+    # 1) اعتبارسنجی سشن
     meta = await session_manager.get_session(session_id)
     if not meta:
         raise HTTPException(status_code=404, detail="session not found")
+
+    # 2) لاگین و پروب
     result = await session_manager.login_and_probe(session_id, username, password)
     log_obj = format_log(str(result), verbosity, locale)
+
+    # 3) اگر اینستاگرام درخواست challenge داده
+    if not getattr(result, "ok", False) and getattr(result, "status", None) == "challenge_required":
+        # آماده‌سازی payload برای UI (مثلا شماره یا ایمیل ماسک‌شده)
+        payload: Dict[str, Any] = {
+            "challenge_type": getattr(result, "challenge_type", None),
+            "mask": getattr(result, "challenge_mask", None)
+        }
+        # تولید توکن چالش و ذخیره در Redis
+        token = await create_challenge(
+            session_id=session_id,
+            ch_type="challenge",
+            payload=payload
+        )
+        # پاسخ حاوی نتیجه اولیه، لاگ و اطلاعات چالش
+        return {
+            "result": result,
+            "log": log_obj,
+            "challenge_token": token,
+            "challenge_payload": payload
+        }
+
+    # 4) در حالت معمول (یا خطای دیگر) همان خروجی قبلی را برگردان
     return {"result": result, "log": log_obj}
 
-@router.post("/sessions/{session_id}/proxy/test", summary="Test proxy / تست پروکسی", description="Test provided proxy string / تست رشته پروکسی ارائه‌شده")
-async def proxy_test(session_id: str, request: Request, proxy: str, session_manager: SessionManager = Depends(get_session_manager), locale: str = Depends(get_locale), _rl=Depends(default_rate_limit)):
+
+@router.post(
+    "/sessions/{session_id}/proxy/test",
+    summary="Test proxy / تست پروکسی",
+    description="Test provided proxy string / تست رشته پروکسی ارائه‌شده"
+)
+async def proxy_test(
+    session_id: str,
+    request: Request,
+    proxy: str,
+    session_manager: SessionManager = Depends(get_session_manager),
+    locale: str = Depends(get_locale),
+    _rl=Depends(default_rate_limit)
+):
     ok, message = test_proxy(proxy, locale=locale)
     if not ok:
         raise HTTPException(status_code=400, detail=message)
     return {"ok": True, "message": message}
 
-@router.post("/sessions/{session_id}/proxy/toggle", summary="Toggle proxy / تغییر وضعیت پروکسی", description="Enable or disable proxy for session / فعال یا غیرفعال‌سازی پروکسی برای سشن")
-async def proxy_toggle(session_id: str, enabled: bool, session_manager: SessionManager = Depends(get_session_manager), _rl=Depends(default_rate_limit)):
+
+@router.post(
+    "/sessions/{session_id}/proxy/toggle",
+    summary="Toggle proxy / تغییر وضعیت پروکسی",
+    description="Enable or disable proxy for session / فعال یا غیرفعال‌سازی پروکسی برای سشن"
+)
+async def proxy_toggle(
+    session_id: str,
+    enabled: bool,
+    session_manager: SessionManager = Depends(get_session_manager),
+    _rl=Depends(default_rate_limit)
+):
     meta = await session_manager.get_session(session_id)
     if not meta:
         raise HTTPException(status_code=404, detail="session not found")
@@ -53,27 +129,54 @@ async def proxy_toggle(session_id: str, enabled: bool, session_manager: SessionM
     await session_manager.apply_proxy_if_enabled(session_id)
     return {"ok": True, "proxy_enabled": enabled}
 
-@router.get("/sessions/{session_id}/export", summary="Export session / خروجی سشن", description="Export session metadata as JSON / خروجی متادیتای سشن به صورت JSON")
-async def export_session(session_id: str, session_manager: SessionManager = Depends(get_session_manager), _rl=Depends(default_rate_limit)):
+
+@router.get(
+    "/sessions/{session_id}/export",
+    summary="Export session / خروجی سشن",
+    description="Export session metadata as JSON / خروجی متادیتای سشن به صورت JSON"
+)
+async def export_session(
+    session_id: str,
+    session_manager: SessionManager = Depends(get_session_manager),
+    _rl=Depends(default_rate_limit)
+):
     meta = await session_manager.get_session(session_id)
     if not meta:
         raise HTTPException(status_code=404, detail="session not found")
     try:
-        payload = await session_manager.export_session(session_id)
+        payload = session_manager.export_session(session_id)
         return {"ok": True, "payload": payload}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/sessions/import", summary="Import session / وارد کردن سشن", description="Import session metadata JSON into DB / وارد کردن متادیتای سشن از JSON")
-async def import_session(payload: Dict, session_manager: SessionManager = Depends(get_session_manager), _rl=Depends(default_rate_limit)):
+
+@router.post(
+    "/sessions/import",
+    summary="Import session / وارد کردن سشن",
+    description="Import session metadata JSON into DB / وارد کردن متادیتای سشن از JSON"
+)
+async def import_session(
+    payload: Dict,
+    session_manager: SessionManager = Depends(get_session_manager),
+    _rl=Depends(default_rate_limit)
+):
     try:
         s = await session_manager.import_session(payload)
         return {"ok": True, "session_id": s.id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/sessions/{session_id}", summary="Delete session / حذف سشن", description="Delete session and runtime client / حذف سشن و کلاینت زمان اجرا")
-async def delete_session(session_id: str, session_manager: SessionManager = Depends(get_session_manager), _rl=Depends(default_rate_limit)):
+
+@router.delete(
+    "/sessions/{session_id}",
+    summary="Delete session / حذف سشن",
+    description="Delete session and runtime client / حذف سشن و کلاینت زمان اجرا"
+)
+async def delete_session(
+    session_id: str,
+    session_manager: SessionManager = Depends(get_session_manager),
+    _rl=Depends(default_rate_limit)
+):
     meta = await session_manager.get_session(session_id)
     if not meta:
         raise HTTPException(status_code=404, detail="session not found")

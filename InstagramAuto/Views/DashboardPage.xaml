@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Dashboard">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+
+            <Label
+                FontAttributes="Bold"
+                FontSize="24"
+                HorizontalOptions="Center"
+                Text="Welcome to AutoInsta" />
+
+            <Button Command="{Binding NavigateToPostsCommand}" Text="Posts" />
+
+            <Button Command="{Binding NavigateToTasksCommand}" Text="Tasks" />
+
+            <Button Command="{Binding NavigateToLogsCommand}" Text="Logs" />
+
+            <Button Command="{Binding NavigateToRulesCommand}" Text="Rules" />
+
+            <Button Command="{Binding NavigateToSettingsCommand}" Text="Settings" />
+
+            <Button Command="{Binding NavigateToStoriesCommand}" Text="Stories" />
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.RulesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Rules">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+
+            <!--  Form برای ایجاد قاعده جدید  -->
+            <Label
+                FontAttributes="Bold"
+                FontSize="18"
+                Text="Create New Rule" />
+
+            <Entry Placeholder="Name" Text="{Binding NewName}" />
+
+            <Editor
+                AutoSize="TextChanges"
+                HeightRequest="100"
+                Placeholder="JSON-Logic expression"
+                Text="{Binding NewExpression}" />
+
+            <StackLayout Orientation="Horizontal" VerticalOptions="Center">
+                <Label Text="Enabled" VerticalOptions="Center" />
+                <Switch HorizontalOptions="EndAndExpand" IsToggled="{Binding NewEnabled}" />
+            </StackLayout>
+
+            <Button
+                Command="{Binding CreateCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                Text="Create Rule" />
+
+            <Label
+                IsVisible="{Binding HasError}"
+                Text="{Binding ErrorMessage}"
+                TextColor="Red" />
+
+            <BoxView
+                Margin="0,10"
+                HeightRequest="1"
+                Color="Gray" />
+
+            <!--  لیست قاعده‌ها  -->
+            <Label
+                FontAttributes="Bold"
+                FontSize="18"
+                Text="Existing Rules" />
+
+            <CollectionView
+                ItemsSource="{Binding Rules}"
+                RemainingItemsThreshold="5"
+                RemainingItemsThresholdReachedCommand="{Binding LoadCommand}">
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame
+                            Margin="4"
+                            Padding="8"
+                            HasShadow="True">
+                            <StackLayout>
+                                <Label FontAttributes="Bold" Text="{Binding Name}" />
+                                <Label LineBreakMode="TailTruncation" Text="{Binding Expression}" />
+                                <Label Text="{Binding Enabled, StringFormat='Enabled: {0}'}" />
+                                <Label FontSize="12" Text="{Binding Created_at, StringFormat='Created: {0:yyyy/MM/dd HH:mm}'}" />
+                            </StackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.StoriesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Stories">
+
+    <Grid Padding="10">
+        <CollectionView
+            Margin="0,0,0,200"
+            ItemsSource="{Binding Items}"
+            RemainingItemsThreshold="5"
+            RemainingItemsThresholdReachedCommand="{Binding LoadCommand}"
+            SelectedItem="{Binding SelectedStory}"
+            SelectionMode="Single">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame
+                        Margin="4"
+                        Padding="6"
+                        HasShadow="True">
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Image
+                                HeightRequest="60"
+                                Source="{Binding MediaUrl}"
+                                WidthRequest="60" />
+                            <StackLayout>
+                                <Label FontAttributes="Bold" Text="{Binding Username}" />
+                                <Label
+                                    FontSize="12"
+                                    Text="{Binding Timestamp}"
+                                    TextColor="Gray" />
+                            </StackLayout>
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!--  فرم پاسخ  -->
+        <StackLayout
+            Padding="10"
+            BackgroundColor="#FFFFFF"
+            HeightRequest="200"
+            VerticalOptions="End">
+            <Label FontAttributes="Bold" Text="Reply to Selected Story" />
+            <Editor
+                AutoSize="TextChanges"
+                HeightRequest="60"
+                Placeholder="Your message..."
+                Text="{Binding ReplyMessage}" />
+            <Entry Placeholder="Optional Link URL" Text="{Binding LinkUrl}" />
+            <Entry Placeholder="Optional Image URL" Text="{Binding ImageUrl}" />
+            <Button
+                Command="{Binding ReplyCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}, FallbackValue=true}"
+                Text="Send Reply" />
+            <Label
+                IsVisible="{Binding HasError}"
+                Text="{Binding ErrorMessage}"
+                TextColor="Red" />
+        </StackLayout>
+    </Grid>
+</ContentPage>

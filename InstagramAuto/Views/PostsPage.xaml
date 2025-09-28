@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.PostsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Posts">
+    <Grid>
+        <!--  Activity Indicator  -->
+        <ActivityIndicator
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="Center" />
+
+        <!--  Error Message  -->
+        <Label
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasError}"
+            Text="{Binding ErrorMessage}"
+            TextColor="Red"
+            VerticalOptions="Center" />
+
+        <!--  Collection of Media  -->
+        <CollectionView
+            Margin="10"
+            ItemsSource="{Binding Items}"
+            RemainingItemsThreshold="5"
+            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame
+                        Margin="4"
+                        Padding="8"
+                        HasShadow="True">
+                        <StackLayout Orientation="Horizontal" Spacing="10">
+                            <Image
+                                HeightRequest="80"
+                                Source="{Binding Thumbnail_url}"
+                                WidthRequest="80" />
+                            <Label Text="{Binding Caption}" VerticalOptions="Center" />
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

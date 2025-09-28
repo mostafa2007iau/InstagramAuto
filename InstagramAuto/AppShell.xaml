@@ -1,14 +1,68 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Shell
-    x:Class="InstagramAuto.AppShell"
+    x:Class="InstagramAuto.Client.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:InstagramAuto"
-    Title="InstagramAuto">
+    xmlns:views="clr-namespace:InstagramAuto.Client.Views"
+    Title="AutoInsta"
+    FlowDirection="LeftToRight">
+
+    <!--  Flyout Header  -->
+    <Shell.FlyoutHeader>
+        <StackLayout Padding="20" BackgroundColor="#2196F3">
+            <Label
+                FontAttributes="Bold"
+                FontSize="24"
+                Text="AutoInsta"
+                TextColor="White" />
+        </StackLayout>
+    </Shell.FlyoutHeader>
+
+    <!--  Routes registration  -->
+    <Shell.ItemTemplate>
+        <DataTemplate>
+            <ShellSection Title="{Binding Title}" Icon="{Binding Icon}">
+                <ShellContent ContentTemplate="{Binding ContentTemplate}" />
+            </ShellSection>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+    <ShellContent
+        Title="لاگین"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Route="LoginPage" />
+    <!--  Main menu items  -->
+    <ShellContent
+        Title="داشبورد"
+        ContentTemplate="{DataTemplate views:DashboardPage}"
+        Route="Home" />
+    <ShellContent
+        Title="پست ها"
+        ContentTemplate="{DataTemplate views:PostsPage}"
+        Route="PostsPage" />
+    <ShellContent
+        Title="وظایف"
+        ContentTemplate="{DataTemplate views:TasksPage}"
+        Route="TasksPage" />
+    <ShellContent
+        Title="لاگ ها"
+        ContentTemplate="{DataTemplate views:LogsPage}"
+        Route="LogsPage" />
+    <ShellContent
+        Title="قوانین"
+        ContentTemplate="{DataTemplate views:RulesPage}"
+        Route="RulesPage" />
+    <ShellContent
+        Title="تنظیمات"
+        ContentTemplate="{DataTemplate views:SettingsPage}"
+        Route="SettingsPage" />
+    <ShellContent
+        Title="استوریها"
+        ContentTemplate="{DataTemplate views:StoriesPage}"
+        Route="StoriesPage" />
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Challenge"
+        ContentTemplate="{DataTemplate views:ChallengePage}"
+        Route="challenge" />
 
 </Shell>

@@ -8,16 +8,15 @@ English:
     Provides a sample dependency for default limits (e.g., 20 req/min).
 """
 
-# app/middleware/verbosity_middleware.py
-
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import Response
-
 from fastapi_limiter.depends import RateLimiter
 
+# نمونه dependency برای محدودیت نرخ
 default_rate_limit = RateLimiter(times=20, seconds=60)
-strict_rate_limit  = RateLimiter(times=5,  seconds=60)
+strict_rate_limit = RateLimiter(times=5, seconds=60)
+
 
 class VerbosityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

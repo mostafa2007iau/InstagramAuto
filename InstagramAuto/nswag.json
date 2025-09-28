@@ -1,0 +1,31 @@
+{
+  "runtime": "Net90",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "openapi_v1.json"
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "InstagramAutoClient",
+      "namespace": "InstagramAuto.Client",
+      "generateClientInterfaces": true,
+      "injectHttpClient": true,
+      "useBaseUrl": true,
+      "disposeHttpClient": false,
+      "generateExceptionClasses": true,
+      "generateClientClasses": true,
+      "useHttpRequestMessageCreationMethod": false,
+      "generateUpdateJsonSerializerSettingsMethod": true,
+      "generateResponseClasses": false,
+      "exceptionClass": "ApiException",
+      "output": "GeneratedClient.cs",
+      "jsonSerializer": "SystemTextJson",
+      "generateOptionalParameters": true,
+      "operationGenerationMode": "SingleClientFromOperationId",
+      "generateDtoTypes": true,
+      "parameterDateTimeFormat": "s"
+    }
+  }
+}

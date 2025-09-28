@@ -13,10 +13,19 @@ English:
 """
 
 import os
-from app.middleware import verbosity_middleware
 from fastapi import FastAPI, Response
-from app.routers import accounts_router, medias_router, rules_router, logs_router, challenge_router, challenge_ws_router, metrics_router, health_router, inbound_router
-from app.middleware.verbosity_middleware import default_rate_limit, RateLimiter, strict_rate_limit
+from app.routers import (
+    accounts_router,
+    medias_router,
+    rules_router,
+    logs_router,
+    challenge_router,
+    challenge_ws_router,
+    metrics_router,
+    health_router,
+    inbound_router,
+)
+from app.middleware.verbosity_middleware import VerbosityMiddleware, default_rate_limit, strict_rate_limit
 from app.db import init_db
 from app.services import telemetry_service
 from fastapi_limiter import FastAPILimiter
@@ -25,10 +34,12 @@ import redis.asyncio as redis  # redis-py async client
 app = FastAPI(
     title="InstaAutomation Backend",
     description="Backend for Insta automation with i18n, per-session proxy and pagination",
-    version="v1"
+    version="v1",
 )
 
-app.add_middleware(verbosity_middleware)
+# ✅ اضافه کردن middleware سفارشی
+app.add_middleware(VerbosityMiddleware)
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -48,16 +59,19 @@ async def startup_event():
         # if limiter init fails, continue without rate-limiting
         pass
 
+
 # Health
 @app.get("/health", summary="Health check / بررسی سلامت")
 async def health():
     return {"status": "ok"}
+
 
 # Metrics endpoint
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
     data, content_type = telemetry_service.metrics_response()
     return Response(content=data, media_type=content_type)
+
 
 # Include routers
 app.include_router(accounts_router.router)
@@ -66,10 +80,12 @@ app.include_router(rules_router.router)
 app.include_router(logs_router.router)
 app.include_router(challenge_router.router)
 app.include_router(challenge_ws_router.router)
+
 # metrics_router is optional (already have /metrics) but included if exists
 try:
     app.include_router(metrics_router.router)
 except Exception:
     pass
+
 app.include_router(health_router.router)
 app.include_router(inbound_router.router)

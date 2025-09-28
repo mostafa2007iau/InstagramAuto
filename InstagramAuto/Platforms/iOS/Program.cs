@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace InstagramAuto
+namespace InstagramAuto.Client
 {
     public class Program
     {

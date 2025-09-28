@@ -1,4 +1,6 @@
-﻿namespace InstagramAuto
+﻿using InstagramAuto.Client;
+
+namespace InstagramAuto.Client
 {
     public partial class App : Application
     {

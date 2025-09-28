@@ -1,9 +1,10 @@
-version: "3.8"
+﻿version: "3.8"
 
 services:
   redis:
     image: "redis:7-alpine"
     container_name: "insta_redis"
+    restart: always
     ports:
       - "6379:6379"
     volumes:
@@ -12,20 +13,22 @@ services:
   backend:
     build: .
     container_name: "insta_backend"
+    restart: always
     depends_on:
       - redis
     environment:
-      - DATABASE_URL=sqlite:///./dev.db
-      - REDIS_URL=redis://redis:6379/0
-      - FERNET_KEY=${FERNET_KEY:-}
-      - CURSOR_SECRET=${CURSOR_SECRET:-}
-      - DEFAULT_LOCALE=en
+      DATABASE_URL: "sqlite:////data/dev.db"   # مسیر مطلق داخل کانتینر
+      REDIS_URL: "redis://redis:6379/0"
+      FERNET_KEY: "MwNRwN2CTQRq1dChVRfy2IFk3nTqiAD7Hp_0YJhJfiE="
+      CURSOR_SECRET: "nvDWiWqXSitOJr2pfDSd26ZYXdLxOZMpDGbNjMB2Cyg="
+      DEFAULT_LOCALE: "en"
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app/app
-      - ./dev.db:/app/dev.db
+      - .:/app              # کد پروژه
+      - db_data:/data       # دیتابیس در volume جدا
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 volumes:
   redis_data:
+  db_data:

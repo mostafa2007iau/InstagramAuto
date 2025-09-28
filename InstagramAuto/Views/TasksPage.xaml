@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="InstagramAuto.Client.Views.TasksPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+    Title="Tasks">
+    <Grid Padding="10">
+        <ActivityIndicator
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="Center" />
+
+        <Label
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasError}"
+            Text="{Binding ErrorMessage}"
+            TextColor="Red"
+            VerticalOptions="Center" />
+
+        <CollectionView
+            ItemsSource="{Binding Items}"
+            RemainingItemsThreshold="5"
+            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame
+                        Margin="4"
+                        Padding="8"
+                        HasShadow="True">
+                        <StackLayout>
+                            <Label FontAttributes="Bold" Text="{Binding Id}" />
+                            <Label Text="{Binding Type}" />
+                            <Label Text="{Binding Status}" />
+                            <StackLayout
+                                Margin="0,5,0,0"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                                <Button
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TasksViewModel}}, Path=RetryCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Text="Retry" />
+                                <Button
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TasksViewModel}}, Path=CancelCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Text="Cancel" />
+                                <Button
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TasksViewModel}}, Path=DlqCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Text="DLQ" />
+                            </StackLayout>
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
