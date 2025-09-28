@@ -6,6 +6,7 @@ using InstagramAuto.Client.Models;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Linq;
 
 namespace InstagramAuto.Client.Services
@@ -39,26 +40,77 @@ namespace InstagramAuto.Client.Services
             // 2) لاگین
             var loginResponse = await _client.LoginAsync(sessionMeta.Id, username, password);
 
-            // 3) بررسی چالش در پاسخ ریشه یا نتیجه
-            var challengeToken = loginResponse.AdditionalProperties != null && loginResponse.AdditionalProperties.ContainsKey("challenge_token")
-                ? loginResponse.AdditionalProperties["challenge_token"]?.ToString()
-                : null;
-            var challengeRequired = loginResponse.AdditionalProperties != null && loginResponse.AdditionalProperties.ContainsKey("challenge_required")
-                ? (bool?)loginResponse.AdditionalProperties["challenge_required"] == true
-                : false;
+            // Normalize response: some backends place actual result under a nested 'result' field.
+            JObject respObj = null;
+            try
+            {
+                var serialized = JsonConvert.SerializeObject(loginResponse);
+                respObj = JObject.Parse(serialized);
+            }
+            catch
+            {
+                // fallback: try to inspect Result property if available
+                respObj = new JObject();
+                try
+                {
+                    var res = loginResponse?.Result;
+                    if (res != null)
+                        respObj["result"] = JObject.FromObject(res);
+                }
+                catch { }
+            }
+
+            JObject resultObj = null;
+            if (respObj != null && respObj["result"] != null && respObj["result"].Type == JTokenType.Object)
+                resultObj = (JObject)respObj["result"];
+
+            // Fallback to top-level shape if no nested result
+            if (resultObj == null)
+            {
+                // try to map common properties from older client wrapper
+                try
+                {
+                    resultObj = new JObject();
+                    // attempt to read some known properties
+                    if (respObj["ok"] != null) resultObj["ok"] = respObj["ok"];
+                    if (respObj["challenge_token"] != null) resultObj["challenge_token"] = respObj["challenge_token"];
+                    if (respObj["challenge_required"] != null) resultObj["challenge_required"] = respObj["challenge_required"];
+                    if (respObj["message"] != null) resultObj["message"] = respObj["message"];
+                }
+                catch
+                {
+                    resultObj = null;
+                }
+            }
+
+            // 3) check for challenge in different possible places
+            string challengeToken = null;
+            bool challengeRequired = false;
+            bool authenticated = false;
+
+            if (resultObj != null)
+            {
+                challengeToken = resultObj.Value<string>("challenge_token");
+                challengeRequired = resultObj.Value<bool?>("challenge_required") == true || resultObj.Value<bool?>("two_factor_required") == true;
+                authenticated = resultObj.Value<bool?>("authenticated") == true || resultObj.Value<bool?>("ok") == true || resultObj.Value<string>("status") == "ok";
+            }
+
+            // Also check top-level for challenge_token (some server responses return it at top)
+            if (string.IsNullOrEmpty(challengeToken) && respObj != null && respObj["challenge_token"] != null)
+                challengeToken = respObj.Value<string>("challenge_token");
 
             if (challengeRequired || !string.IsNullOrEmpty(challengeToken))
             {
-                // ناوبری به ChallengePage با توکن و مدارک ورود
-                var route = $"challenge?ChallengeToken={challengeToken ?? sessionMeta.Id}"
+                // navigate to ChallengePage with token and credentials
+                var route = $"challenge?ChallengeToken={Uri.EscapeDataString(challengeToken ?? sessionMeta.Id)}"
                           + $"&Username={Uri.EscapeDataString(username)}"
                           + $"&Password={Uri.EscapeDataString(password)}";
                 await Shell.Current.GoToAsync(route);
                 return new AccountSession { ChallengeToken = challengeToken ?? sessionMeta.Id, Id = sessionMeta.Id, AccountId = sessionMeta.Account_id };
             }
 
-            // 4) اگر Ok است
-            if (loginResponse?.Result?.Ok == true)
+            // 4) if authenticated success
+            if (authenticated)
             {
                 _cachedSession = new AccountSession
                 {
@@ -71,13 +123,25 @@ namespace InstagramAuto.Client.Services
                 return _cachedSession;
             }
 
-            // نمایش جزئیات خطا به صورت فارسی و انگلیسی (در صورت وجود)
-            var faMsg = loginResponse?.Result?.Message;
-            var enMsg = loginResponse?.Result?.AdditionalProperties != null && loginResponse.Result.AdditionalProperties.ContainsKey("message_en")
-                ? loginResponse.Result.AdditionalProperties["message_en"]?.ToString()
-                : null;
-            var errorDetails = Newtonsoft.Json.JsonConvert.SerializeObject(loginResponse);
-            var msg = $"ورود ناموفق: نه موفقیت و نه چالش.\nFA: {faMsg}\nEN: {enMsg}\nDetails: {errorDetails}";
+            // 5) otherwise prepare detailed error message (include server-provided details when available)
+            string faMsg = null;
+            string enMsg = null;
+            string details = JsonConvert.SerializeObject(loginResponse);
+
+            if (resultObj != null)
+            {
+                faMsg = resultObj.Value<string>("message");
+                enMsg = resultObj.Value<string>("message_en");
+            }
+
+            // If no specific messages provided, try top-level fields
+            if (string.IsNullOrEmpty(faMsg) && respObj != null)
+                faMsg = respObj.Value<string>("message") ?? respObj.Value<string>("error_detail");
+
+            if (string.IsNullOrEmpty(enMsg) && respObj != null)
+                enMsg = respObj.Value<string>("message_en");
+
+            var msg = $"ورود ناموفق: نه موفقیت و نه چالش.\nFA: {faMsg ?? "خطای داخلی هنگام ورود"}\nEN: {enMsg ?? string.Empty}\nDetails: {details}";
             throw new Exception(msg);
         }
 

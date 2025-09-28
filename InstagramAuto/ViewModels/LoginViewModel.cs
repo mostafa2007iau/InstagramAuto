@@ -8,6 +8,7 @@ using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
 using InstagramAuto.Client.Views;
+using Newtonsoft.Json.Linq;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -18,6 +19,7 @@ namespace InstagramAuto.Client.ViewModels
         private string _password;
         private bool _isBusy;
         private string _errorMessage;
+        private string _errorDetails;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -57,6 +59,18 @@ namespace InstagramAuto.Client.ViewModels
             }
         }
 
+        // Detailed error (traceback / full JSON) for copy action
+        public string ErrorDetails
+        {
+            get => _errorDetails;
+            set
+            {
+                if (_errorDetails == value) return;
+                _errorDetails = value;
+                OnPropertyChanged(nameof(ErrorDetails));
+            }
+        }
+
         public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
         public ICommand LoginCommand { get; }
@@ -74,6 +88,7 @@ namespace InstagramAuto.Client.ViewModels
 
             IsBusy = true;
             ErrorMessage = string.Empty;
+            ErrorDetails = string.Empty;
 
             try
             {
@@ -81,7 +96,7 @@ namespace InstagramAuto.Client.ViewModels
                 var session = await _authService.LoginAsync(Username, Password);
 
                 // 2) چک کردن challenge
-                if (!string.IsNullOrWhiteSpace(session.ChallengeToken))
+                if (!string.IsNullOrWhiteSpace(session?.ChallengeToken))
                 {
                     // به صفحه‌ی Challenge منتقل شو
                     var parameters = new Dictionary<string, object>
@@ -105,7 +120,32 @@ namespace InstagramAuto.Client.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = ex.Message;
+                // try to extract structured details if backend included them
+                try
+                {
+                    var msg = ex.Message ?? string.Empty;
+                    var detailsIndex = msg.IndexOf("Details:");
+                    if (detailsIndex >= 0)
+                    {
+                        ErrorMessage = msg.Substring(0, detailsIndex).Trim();
+                        ErrorDetails = msg.Substring(detailsIndex + "Details:".Length).Trim();
+                        // attempt to pretty-print JSON if possible
+                        try
+                        {
+                            var parsed = JToken.Parse(ErrorDetails);
+                            ErrorDetails = parsed.ToString(Newtonsoft.Json.Formatting.Indented);
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        ErrorMessage = msg;
+                    }
+                }
+                catch
+                {
+                    ErrorMessage = ex.Message;
+                }
             }
             finally
             {

@@ -2,6 +2,12 @@
 using InstagramAuto.Client.Services;
 using InstagramAuto.Client.Views;
 using System.Windows.Input;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using InstagramAuto.Client.Models;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -40,35 +46,72 @@ namespace InstagramAuto.Client.ViewModels
 
         public async Task LoadStateAsync()
         {
-            var state = await _challengeService.GetStateAsync(ChallengeToken);
-            ChallengeInfo = $"Type: {state.Type}, Info: {string.Join(", ", state.Payload.Select(kv => kv.Key + "=" + kv.Value))}";
+            try
+            {
+                var state = await _challengeService.GetStateAsync(ChallengeToken);
+                if (state != null)
+                {
+                    var parts = new List<string>();
+                    if (state.Payload != null)
+                    {
+                        foreach (var kv in state.Payload)
+                            parts.Add($"{kv.Key}={kv.Value}");
+                    }
+                    ChallengeInfo = $"Type: {state.Type}, Info: {string.Join(", ", parts)}";
+                }
+                else
+                {
+                    ChallengeInfo = "No challenge state available.";
+                }
+            }
+            catch (Exception ex)
+            {
+                ChallengeInfo = "Failed to load challenge state.";
+                StatusMessage = ex.Message;
+            }
         }
 
         private async Task SubmitCode()
         {
-            var payload = new Dictionary<string, object>
+            try
             {
-                { "code", Code }
-            };
-
-            var ok = await _challengeService.ResolveAsync(ChallengeToken, payload);
-
-            if (ok)
-            {
-                var session = await _authService.LoginAsync(Username, Password);
-
-                if (string.IsNullOrEmpty(session.ChallengeToken))
+                StatusMessage = string.Empty;
+                var payload = new Dictionary<string, object>
                 {
-                    await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
+                    { "code", Code }
+                };
+
+                var ok = await _challengeService.ResolveAsync(ChallengeToken, payload);
+
+                if (ok)
+                {
+                    try
+                    {
+                        var session = await _authService.LoginAsync(Username, Password);
+
+                        if (session != null && string.IsNullOrEmpty(session.ChallengeToken))
+                        {
+                            await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
+                        }
+                        else
+                        {
+                            StatusMessage = "Challenge still required.";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Auth failed after resolving challenge
+                        StatusMessage = ex.Message;
+                    }
                 }
                 else
                 {
-                    StatusMessage = "Challenge still required.";
+                    StatusMessage = "Invalid code or failed to resolve challenge.";
                 }
             }
-            else
+            catch (Exception ex)
             {
-                StatusMessage = "Invalid code.";
+                StatusMessage = ex.Message;
             }
         }
     }

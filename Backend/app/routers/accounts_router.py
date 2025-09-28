@@ -11,6 +11,9 @@ English:
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Dict, Any
+import logging
+import traceback
+
 from app.schemas.session_schema import SessionCreateIn, SessionOut
 from app.deps import get_session_manager, get_locale, get_client_log_verbosity
 from app.services.session_manager import SessionManager
@@ -21,6 +24,7 @@ from app.logging_utils import format_log
 from app.middleware.verbosity_middleware import default_rate_limit, strict_rate_limit
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -58,7 +62,7 @@ async def login_and_probe(
     verbosity = Depends(get_client_log_verbosity),
     _rl=Depends(default_rate_limit)
 ):
-    # 1) اعتبارسنجی سشن
+    # 1) validate session
     meta = await session_manager.get_session(session_id)
     if not meta:
         raise HTTPException(status_code=404, detail={
@@ -68,22 +72,28 @@ async def login_and_probe(
         })
 
     try:
-        # 2) لاگین و پروب
+        # 2) login and probe
         result = await session_manager.login_and_probe(session_id, username, password)
         log_obj = format_log(str(result), verbosity, locale)
     except Exception as e:
+        tb = traceback.format_exc()
+        logger.exception("Unhandled exception in login_and_probe: %s", e)
+        # Return extra debug fields for local debugging. Remove in production.
         return {
             "ok": False,
-            "message": translate("unknown.error", "fa"),
-            "message_en": translate("unknown.error", "en"),
-            "error_detail": str(e)
+            "message": translate("login.internal_error", "fa"),
+            "message_en": translate("login.internal_error", "en"),
+            "error_detail": str(e),
+            "exception": e.__class__.__name__,
+            "traceback": tb
         }
 
-    # 3) اگر اینستاگرام درخواست challenge داده
+    # 3) challenge path from Instagram
     if not result.get("ok", False) and result.get("challenge_required", False):
         payload: Dict[str, Any] = {
             "challenge_type": result.get("challenge_type"),
-            "mask": result.get("challenge_mask")
+            "mask": result.get("challenge_mask"),
+            "info": result.get("info") or result.get("challenge_payload")
         }
         token = result.get("challenge_token")
         return {
@@ -93,7 +103,7 @@ async def login_and_probe(
             "challenge_payload": payload
         }
 
-    # 4) اگر لاگین موفق نبود، پیام خطا را با جزییات و دو زبانه برگردان
+    # 4) failed login (no exception) — return details
     if not result.get("ok", False):
         return {
             "result": result,
@@ -101,10 +111,12 @@ async def login_and_probe(
             "message": result.get("message"),
             "message_en": result.get("message_en"),
             "login_result": result.get("login_result"),
-            "error_detail": result.get("error_detail")
+            "error_detail": result.get("error_detail"),
+            "exception": result.get("exception"),
+            "traceback": result.get("traceback")
         }
 
-    # 5) در حالت موفق همان خروجی قبلی را برگردان
+    # 5) success
     return {"result": result, "log": log_obj}
 
 

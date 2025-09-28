@@ -24,6 +24,7 @@ import asyncio
 import base64
 import traceback
 import uuid
+import logging
 
 from sqlmodel import Session, select
 from app.db import engine
@@ -31,8 +32,10 @@ from app.models.session_db_model import SessionDB
 from app.i18n import translate
 from app.utils.retry import retry_with_backoff
 from app.config import PROBE_RETRY_ATTEMPTS, PROBE_RETRY_BACKOFF_BASE
-from app.services.insta_client_factory import BaseInstaClientWrapper
+from app.services.insta_client_factory import BaseInstaClientWrapper, InstaClientFactory
 from app.services.telemetry_service import incr
+
+logger = logging.getLogger(__name__)
 
 
 class SessionManager:
@@ -44,9 +47,10 @@ class SessionManager:
         Async SessionManager: manage create/read/update/delete sessions and runtime clients.
     """
 
-    def __init__(self, client_factory=BaseInstaClientWrapper):
+    def __init__(self, client_factory=InstaClientFactory):
         # runtime clients: session_id -> BaseInstaClientWrapper instance
         self.clients: Dict[str, BaseInstaClientWrapper] = {}
+        # client_factory should be a factory class exposing create_new()
         self.client_factory = client_factory
         # per-session asyncio locks to avoid races
         self._locks: Dict[str, asyncio.Lock] = {}
@@ -87,35 +91,41 @@ class SessionManager:
             if not sess:
                 raise RuntimeError("session not found")
 
-            # Instantiate a new client via factory
+            # Instantiate a new client via factory. Expect factory to expose create_new().
             client_wrapper: Optional[BaseInstaClientWrapper] = None
             try:
                 create_new = getattr(self.client_factory, "create_new", None)
-                if asyncio.iscoroutinefunction(create_new):
-                    client_wrapper = await create_new()
-                elif callable(create_new):
-                    client_wrapper = create_new()
-                else:
-                    # factory is a class; attempt to instantiate
+                if create_new is None:
+                    # fallback: if client_factory is a wrapper instance/class without create_new, try to instantiate
                     client_wrapper = self.client_factory()
-            except Exception:
-                # fallback: attempt direct instantiation of wrapper class if possible
+                else:
+                    # call create_new (may be sync)
+                    client_wrapper = create_new()
+                    # if returns coroutine, await it
+                    if asyncio.iscoroutine(client_wrapper):
+                        client_wrapper = await client_wrapper
+            except Exception as e:
+                logger.exception("Failed to create client wrapper: %s", e)
+                # fallback: try BaseInstaClientWrapper.create_new if available
                 try:
-                    client_wrapper = BaseInstaClientWrapper.create_new()
-                except Exception as e:
-                    raise RuntimeError(f"failed to create insta client: {e}")
+                    client_wrapper = InstaClientFactory.create_new()
+                except Exception as e2:
+                    logger.exception("Fallback client creation failed: %s", e2)
+                    raise RuntimeError(f"failed to create insta client: {e2}")
 
             # If DB has a session_blob, attempt to load it into client
-            if sess.session_blob:
+            if sess.session_blob and client_wrapper is not None:
                 try:
-                    # session_blob stored as base64 encoded bytes (not encrypted here)
-                    raw = base64.urlsafe_b64decode(sess.session_blob.encode())
+                    # decrypt and load session bytes
+                    from app.services.insta_client_factory import decrypt_session_token
+                    raw = decrypt_session_token(sess.session_blob)
                     load_fn = getattr(client_wrapper, "load_session_bytes", None)
                     if asyncio.iscoroutinefunction(load_fn):
                         await load_fn(raw)
                     elif callable(load_fn):
                         load_fn(raw)
-                except Exception:
+                except Exception as e:
+                    logger.exception("Failed to load session blob into client: %s", e)
                     # ignore load failures; client will require login
                     pass
 
@@ -157,19 +167,15 @@ class SessionManager:
         )
         self._upsert_session_db(session_db)
 
-        # create runtime client
-        client = None
-        create_new = getattr(self.client_factory, "create_new", None)
+        # create runtime client using factory
         try:
-            if asyncio.iscoroutinefunction(create_new):
-                client = await create_new()
-            elif callable(create_new):
-                client = create_new()
-            else:
-                client = self.client_factory()
-        except Exception:
+            client = self.client_factory.create_new() if hasattr(self.client_factory, "create_new") else self.client_factory()
+            if asyncio.iscoroutine(client):
+                client = await client
+        except Exception as e:
+            logger.exception("Failed initial client creation for new session: %s", e)
             # fallback: try factory static method
-            client = BaseInstaClientWrapper.create_new()
+            client = InstaClientFactory.create_new()
 
         self.clients[sid] = client
         return session_db
@@ -213,16 +219,34 @@ class SessionManager:
         sess = self._get_session_db(session_id)
         if not sess:
             raise RuntimeError("session not found")
+        # Only attempt to set proxy if proxy_enabled True and proxy value present
+        if not sess.proxy_enabled or not sess.proxy:
+            logger.debug("Proxy not enabled or not set for %s; skipping set_proxy", session_id)
+            return
+
         client = await self._ensure_client(session_id)
+        if client is None:
+            logger.debug("No client available for %s when applying proxy", session_id)
+            return
+
         setp = getattr(client, "set_proxy", None)
+        if not callable(setp):
+            logger.debug("Client for %s does not support set_proxy; skipping", session_id)
+            return
+
         try:
+            # call sync or async set_proxy
             if asyncio.iscoroutinefunction(setp):
-                await setp(sess.proxy if sess.proxy_enabled else None)
-            elif callable(setp):
-                setp(sess.proxy if sess.proxy_enabled else None)
-        except Exception:
-            # ignore proxy apply errors (log if you have logging)
-            pass
+                await setp(sess.proxy)
+            else:
+                setp(sess.proxy)
+        except NotImplementedError:
+            # client indicates set_proxy not supported; log and continue
+            logger.warning("set_proxy not implemented by client for session %s", session_id)
+        except Exception as e:
+            logger.exception("Failed to apply proxy for %s: %s", session_id, e)
+            # ignore proxy apply errors to avoid internal failures
+            return
 
     async def persist_client_session(self, session_id: str):
         """
@@ -238,7 +262,8 @@ class SessionManager:
         if not client:
             return
         dump_fn = getattr(client, "dump_session_bytes", None)
-        if not dump_fn:
+        if not callable(dump_fn):
+            logger.debug("Client for %s has no dump_session_bytes", session_id)
             return
         try:
             raw = dump_fn() if not asyncio.iscoroutinefunction(dump_fn) else await dump_fn()
@@ -246,7 +271,9 @@ class SessionManager:
                 return
             # ensure bytes
             b = raw if isinstance(raw, (bytes, bytearray)) else (str(raw).encode())
-            token = base64.urlsafe_b64encode(b).decode()
+            # encrypt and store
+            from app.services.insta_client_factory import encrypt_session_bytes
+            token = encrypt_session_bytes(b)
             with Session(engine) as db:
                 sess = db.get(SessionDB, session_id)
                 if not sess:
@@ -256,9 +283,9 @@ class SessionManager:
                 db.add(sess)
                 db.commit()
                 db.refresh(sess)
-        except Exception:
+        except Exception as e:
+            logger.exception("Failed to persist session for %s: %s", session_id, e)
             # swallow to avoid breaking caller flows; optionally log
-            traceback.print_exc()
             pass
 
     # ----------------------------
@@ -279,7 +306,7 @@ class SessionManager:
             raise RuntimeError("session not found")
 
         client = self.clients.get(session_id)
-        client_obj = getattr(client, "client", None)
+        client_obj = getattr(client, "client", None) if client else None
 
         # Try to extract a stable user id if available
         uid = None
@@ -313,6 +340,7 @@ class SessionManager:
         English:
             Probe user medias with retry. Increments probe_calls metric on successful attempt.
         """
+        # ensure proxy applied if enabled; apply_proxy_if_enabled now safely returns when proxy disabled
         await self.apply_proxy_if_enabled(session_id)
         client = await self._ensure_client(session_id)
 
@@ -322,7 +350,8 @@ class SessionManager:
                 medias = await user_medias_fn(uid, amount)
             else:
                 medias = user_medias_fn(uid, amount)
-        except Exception:
+        except Exception as e:
+            logger.exception("user_medias failed for %s: %s", session_id, e)
             # bubble up to retry wrapper
             raise
         # update last_media_check timestamp
@@ -346,22 +375,47 @@ class SessionManager:
             Perform login and then probe medias. On challenge/2FA, returns challenge_token.
             On success, persists session dump (base64) to DB.
         """
+        # apply proxy only if enabled
         await self.apply_proxy_if_enabled(session_id)
         client = await self._ensure_client(session_id)
         login_fn = getattr(client, "login", None)
+
+        if not callable(login_fn):
+            logger.warning("Client for %s does not support login", session_id)
+            return {
+                "ok": False,
+                "message": translate("login.no_client_login", "fa"),
+                "message_en": translate("login.no_client_login", "en"),
+                "error_detail": "client has no login method"
+            }
 
         try:
             if asyncio.iscoroutinefunction(login_fn):
                 login_res = await login_fn(username, password)
             else:
                 login_res = login_fn(username, password)
+        except NotImplementedError as e:
+            tb = traceback.format_exc()
+            logger.exception("Login not implemented for session %s: %s", session_id, e)
+            return {
+                "ok": False,
+                "message": translate("login.internal_error", "fa"),
+                "message_en": translate("login.internal_error", "en"),
+                "error_detail": "login not implemented",
+                "exception": e.__class__.__name__,
+                "traceback": tb
+            }
         except Exception as e:
+            tb = traceback.format_exc()
+            logger.exception("Exception while performing client.login for session %s: %s", session_id, e)
             return {
                 "ok": False,
                 "error": {"code": "login_exception", "detail": str(e)},
                 "message": translate("login.internal_error", "fa"),
                 "message_en": translate("login.internal_error", "en"),
-                "error_detail": str(e)
+                "error_detail": str(e),
+                "exception": e.__class__.__name__,
+                "traceback": tb
             }
 
         # handle common shapes returned by clients
@@ -380,12 +434,12 @@ class SessionManager:
         try:
             await self.persist_client_session(session_id)
         except Exception as e:
-            # لاگ خطا و ادامه
-            pass
+            logger.exception("Failed to persist session for %s: %s", session_id, e)
+            # continue even if persist fails
 
         uid = None
         if isinstance(login_res, dict):
-            uid = login_res.get("user_id") or login_res.get("pk")
+            uid = login_res.get("user_id") or login_res.get("pk") or login_res.get("user_id")
         if not uid:
             client_obj = getattr(client, "client", None)
             uid = getattr(client_obj, "user_id", None) or getattr(client_obj, "user_pk", None)
@@ -395,11 +449,15 @@ class SessionManager:
         try:
             medias = await self.probe_medias(session_id, uid, 5)
         except Exception as e:
+            tb = traceback.format_exc()
+            logger.exception("Probe medias failed for %s: %s", session_id, e)
             return {
                 "ok": False,
                 "message": translate("network.error", "fa"),
                 "message_en": translate("network.error", "en"),
-                "error_detail": str(e)
+                "error_detail": str(e),
+                "exception": e.__class__.__name__,
+                "traceback": tb
             }
         needs_investigation = len(medias) == 0
         sess = self._get_session_db(session_id)
