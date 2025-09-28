@@ -41,6 +41,7 @@
     <Content Include=".github\workflows\ci.yml" />
     <Content Include="docker-compose.yml" />
     <Content Include="Dockerfile" />
+    <Content Include="InstalationApi-Readme.txt" />
     <Content Include="openapi_v1.json" />
     <Content Include="project_map.txt" />
     <Content Include="README_EN.md" />

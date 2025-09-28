@@ -1,30 +1,17 @@
 ﻿"""
 Persian:
-    Router برای دریافت رویدادهای ورودی (webhook/poll) و اجرای rules engine.
-    این endpoint به دلیل احتمال فراخوانی زیاد با rate-limit محافظت شده است.
-
+    Router برای مدیریت و فهرست قاعده‌ها (rules) برای هر اکانت.
 English:
-    Router to receive inbound events (webhook/poll) and run rules engine.
-    This endpoint is rate-limited to reduce abuse.
+    Router to list and manage rules for an account.
 """
 
-from fastapi import APIRouter, Body, Depends, HTTPException
-from app.services.rules_engine import evaluate_rules_for_event
+from fastapi import APIRouter, Query, Depends
+from typing import Optional
 from app.middleware.verbosity_middleware import default_rate_limit
-from typing import Dict
 
-router = APIRouter(prefix="/api/inbound", tags=["inbound"])
+router = APIRouter(prefix="/api/rules", tags=["rules"])
 
-@router.post("/event", summary="Inbound event / رویداد ورودی", description="Receive inbound events and run rules engine / دریافت رویدادهای ورودی و اجرای قواعد")
-async def inbound_event(payload: Dict = Body(...), _rl=Depends(default_rate_limit)):
-    # validate minimal shape
-    account_id = payload.get("account_id")
-    session_id = payload.get("session_id")
-    if not account_id or not session_id:
-        raise HTTPException(status_code=400, detail="account_id and session_id are required")
-    # run rules engine (async or sync)
-    try:
-        res = evaluate_rules_for_event(payload)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "matched": res}
+@router.get("")
+async def list_rules(account_id: Optional[str] = Query(None), limit: int = Query(50), cursor: Optional[str] = Query(None), _rl=Depends(default_rate_limit)):
+    """Return an empty paginated rules list (stub)"""
+    return {"items": [], "meta": {"next_cursor": None, "count_returned": 0}}

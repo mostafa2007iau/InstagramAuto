@@ -17,6 +17,7 @@ from app.schemas.pagination_schema import PaginatedResponse, PaginationMeta
 from app.utils.secure_cursor import sign, verify
 from app.i18n import translate
 from app.middleware.verbosity_middleware import default_rate_limit
+import asyncio
 
 router = APIRouter(prefix="/api/medias", tags=["medias"])
 
