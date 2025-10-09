@@ -31,14 +31,13 @@ docker container prune
 //حذف همه‌ی کانتینرها (در حال اجرا و متوقف) با یک دستور:
 docker rm $(docker ps -aq)
 
-//
+
 docker-compose down
 
-//ساخت دوباره بدون اجرای خودکار
 docker-compose build
 
 //
 docker-compose build --no-cache
 
 //
-لهفاdocker-compose up -d
+docker-compose up -d

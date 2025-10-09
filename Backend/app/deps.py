@@ -11,11 +11,15 @@ English:
 from fastapi import Request, Depends
 from app.services.session_manager import SessionManager
 from app.config import LOG_VERBOSITY_DEFAULT, LogVerbosity
+from app.db import get_session
 
 # Singleton session manager instance used by DI
-_session_manager = SessionManager()
+_session_manager = None
 
-def get_session_manager() -> SessionManager:
+def get_session_manager(db=Depends(get_session)) -> SessionManager:
+    global _session_manager
+    if _session_manager is None:
+        _session_manager = SessionManager(db)
     return _session_manager
 
 def get_locale(request: Request) -> str:
