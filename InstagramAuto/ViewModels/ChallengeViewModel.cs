@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using InstagramAuto.Client.Models;
+using System.Net.WebSockets;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -16,8 +17,8 @@ namespace InstagramAuto.Client.ViewModels
     [QueryProperty(nameof(Password), "Password")]
     public class ChallengeViewModel : BaseViewModel
     {
-        private readonly ChallengeService _challengeService;
-        private readonly AuthService _authService;
+        private readonly IChallengeService _challengeService;
+        private readonly IAuthService _authService;
 
         public string ChallengeToken { get; set; }
         public string Username { get; set; }
@@ -32,16 +33,15 @@ namespace InstagramAuto.Client.ViewModels
         public string ChallengeInfo { get => _challengeInfo; set { _challengeInfo = value; OnPropertyChanged(); } }
 
         public ICommand SubmitCommand { get; }
+        public ICommand LoadCommand { get; }
 
-        public ChallengeViewModel()
+        public ChallengeViewModel(IChallengeService challengeService, IAuthService authService)
         {
-            InstagramAutoClient apiclient = new InstagramAutoClient(new HttpClient());
-            var http = new HttpClient { BaseAddress = new Uri(apiclient.BaseUrl) };
-            _challengeService = new ChallengeService(http);
-            var client = new InstagramAutoClient(http);
-            _authService = new AuthService(client);
+            _challengeService = challengeService ?? throw new ArgumentNullException(nameof(challengeService));
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
             SubmitCommand = new Command(async () => await SubmitCode());
+            LoadCommand = new Command(async () => await LoadStateAsync());
         }
 
         public async Task LoadStateAsync()
@@ -54,7 +54,7 @@ namespace InstagramAuto.Client.ViewModels
                     var parts = new List<string>();
                     if (state.Payload != null)
                     {
-                        foreach (var kv in state.Payload)
+                        foreach (var kv in (IDictionary<string, object>)state.Payload)
                             parts.Add($"{kv.Key}={kv.Value}");
                     }
                     ChallengeInfo = $"Type: {state.Type}, Info: {string.Join(", ", parts)}";
@@ -100,7 +100,6 @@ namespace InstagramAuto.Client.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        // Auth failed after resolving challenge
                         StatusMessage = ex.Message;
                     }
                 }

@@ -67,7 +67,6 @@ class BaseInstaClientWrapper:
         """
         raise NotImplementedError
 
-# Real instagrapi wrapper (if instagrapi available)
 class InstaClientRealWrapper(BaseInstaClientWrapper):
     def __init__(self, client):
         self.client = client
@@ -77,7 +76,6 @@ class InstaClientRealWrapper(BaseInstaClientWrapper):
         instagrapi = _import_instagrapi()
         if not instagrapi:
             raise RuntimeError("instagrapi not installed")
-        # instantiate Client per installed version API
         client = instagrapi.Client(timeout=INSTAGRAPI_TIMEOUT) if hasattr(instagrapi, "Client") else instagrapi.Client()
         return cls(client)
 
@@ -88,7 +86,6 @@ class InstaClientRealWrapper(BaseInstaClientWrapper):
             else:
                 self.client.set_proxy(None)
         except Exception:
-            # fallback to session proxies mutation
             if hasattr(self.client, "session"):
                 if proxy:
                     self.client.session.proxies.update({"http": proxy, "https": proxy})
@@ -96,68 +93,59 @@ class InstaClientRealWrapper(BaseInstaClientWrapper):
                     self.client.session.proxies.clear()
 
     def login(self, username: str, password: str):
-        # instagrapi.Client.login may return dict or object or raise exceptions
         return self.client.login(username, password)
 
+    def _ensure_numeric_uid(self, uid: str):
+        """
+        اگر uid رشته‌ی username باشه، تبدیلش می‌کنیم به user_id عددی.
+        """
+        if isinstance(uid, str) and not uid.isdigit():
+            try:
+                return self.client.user_id_from_username(uid)
+            except Exception:
+                return uid
+        return uid
+
     def user_medias(self, uid: str, amount: int):
-        # many versions accept numeric uid or username; caller decides
+        uid = self._ensure_numeric_uid(uid)
         return self.client.user_medias(uid, amount)
 
     def get_user_medias_page(self, uid: str, limit: int, provider_cursor: Optional[str]):
-        """
-        Try to support common instagrapi pagination patterns:
-        - If provider_cursor is provided and client supports a param like max_id, attempt to pass it.
-        - If client exposes a paginator/iterator, consume required count and return next token if available.
-        - If client returns dict with next_max_id, return it as provider_cursor.
-
-        Returns (items_list, next_provider_cursor_or_none)
-        """
-        # Attempt to call with provider_cursor where possible
+        uid = self._ensure_numeric_uid(uid)
         try:
-            # prefer a client method that supports pagination token by position
-            # many implementations accept (user_id, amount, max_id) or (user_id, amount, max_id=None)
-            try:
-                if provider_cursor is not None:
-                    raw = self.client.user_medias(uid, limit, provider_cursor)
-                else:
-                    raw = self.client.user_medias(uid, limit)
-            except TypeError:
-                # signature didn't accept provider_cursor; call without it
+            if provider_cursor is not None:
+                raw = self.client.user_medias(uid, limit, provider_cursor)
+            else:
                 raw = self.client.user_medias(uid, limit)
-        except Exception as e:
-            # as a last resort, try iterator approach
+        except TypeError:
+            raw = self.client.user_medias(uid, limit)
+        except Exception:
+            # fallback به iterator
             try:
                 it = self.client.user_medias_iter(uid)
-                items = []
-                next_cursor = None
+                items, next_cursor = [], None
                 for i, media in enumerate(it):
                     if i >= limit:
-                        # provider-specific iterators may expose state; we don't have it here
                         break
                     items.append(media)
                 return items, next_cursor
             except Exception:
                 raise
 
-        # Interpret raw
         if isinstance(raw, dict):
             items = raw.get("items", []) or raw.get("medias", []) or []
             next_cursor = raw.get("next_max_id") or raw.get("next_cursor") or raw.get("max_id")
             return items, next_cursor
         if isinstance(raw, list):
-            # no next cursor info available
             return raw, None
-        # fallback: try to coerce to list
         try:
             return list(raw), None
         except Exception:
             return [], None
 
     def dump_session_bytes(self) -> bytes:
-        # prefer official dump_session_to_bytes if present
         if hasattr(self.client, "dump_session_to_bytes"):
             return self.client.dump_session_to_bytes()
-        # fallback to dump_session (may write to file) -> try to retrieve settings
         if hasattr(self.client, "settings"):
             try:
                 return json.dumps(self.client.settings).encode()
@@ -172,22 +160,19 @@ class InstaClientRealWrapper(BaseInstaClientWrapper):
             try:
                 return self.client.load_session(b)
             except Exception:
-                # maybe expects string
                 return self.client.load_session(b.decode() if isinstance(b, bytes) else b)
-        # best-effort: set settings attribute
         try:
             self.client.settings = json.loads(b.decode() if isinstance(b, bytes) else b)
         except Exception:
             pass
 
     def send_direct_message(self, *args, **kwargs):
-        # instagrapi client may have direct_message methods; try common ones
         if hasattr(self.client, "direct_send"):
             return self.client.direct_send(*args, **kwargs)
         if hasattr(self.client, "direct_message"):
             return self.client.direct_message(*args, **kwargs)
-        # not supported
         raise NotImplementedError("send_direct_message not implemented by underlying instagrapi client")
+
 
 # Mock wrapper used for tests and when instagrapi is not installed
 class MockInstaClientWrapper(BaseInstaClientWrapper):

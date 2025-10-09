@@ -9,9 +9,16 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
-                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Icons.xaml" />
+                <ResourceDictionary Source="Resources/Styles/GlobalStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <!-- حذف تعریف رنگ‌های تکراری که در Colors.xaml هستند -->
+            <!-- فقط کانورترها و منابع خاص اینجا بماند -->
+            <!--  Converters  -->
+            <converters:StatusColorConverter x:Key="StatusColorConverter" />
+            <converters:StatusIconConverter x:Key="StatusIconConverter" />
+            <converters:UsageColorConverter x:Key="UsageColorConverter" />
+            <converters:TimeAgoConverter x:Key="TimeAgoConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

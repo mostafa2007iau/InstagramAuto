@@ -18,6 +18,7 @@ from app.utils.secure_cursor import sign, verify
 from app.i18n import translate
 from app.middleware.verbosity_middleware import default_rate_limit
 import asyncio
+import logging
 
 router = APIRouter(prefix="/api/medias", tags=["medias"])
 
@@ -50,6 +51,19 @@ async def list_medias(request: Request, session_id: str = Query(...), limit: int
     # ensure client
     client = await session_manager._ensure_client(session_id)
 
+    # determine uid to pass to client methods
+    # prefer runtime client internal id (user_id / user_pk) if available, otherwise use account_id as username
+    uid = None
+    try:
+        client_obj = getattr(client, "client", None)
+        if client_obj is not None:
+            uid = getattr(client_obj, "user_id", None) or getattr(client_obj, "user_pk", None) or getattr(client_obj, "username", None)
+    except Exception:
+        uid = None
+    if not uid:
+        # do not prefix with 'user_'; client libraries usually accept username or numeric id
+        uid = sess.account_id
+
     medias_items = []
     next_provider_cursor = None
 
@@ -57,20 +71,39 @@ async def list_medias(request: Request, session_id: str = Query(...), limit: int
         user_medias_fn = getattr(client, "get_user_medias_page", None)
         if user_medias_fn:
             # support sync or async
+            logging.getLogger(__name__).debug("Calling get_user_medias_page with uid=%s provider_cursor=%s limit=%s", uid, provider_cursor, limit)
             if asyncio.iscoroutinefunction(user_medias_fn):
-                medias_raw, next_provider_cursor = await user_medias_fn(f"user_{sess.account_id}", limit, provider_cursor)
+                medias_raw, next_provider_cursor = await user_medias_fn(uid, limit, provider_cursor)
             else:
-                medias_raw, next_provider_cursor = user_medias_fn(f"user_{sess.account_id}", limit, provider_cursor)
+                medias_raw, next_provider_cursor = user_medias_fn(uid, limit, provider_cursor)
         else:
             # fallback to user_medias
             um = getattr(client, "user_medias", None)
             if not um:
                 raise HTTPException(status_code=500, detail="client does not support media retrieval")
+            logging.getLogger(__name__).debug("Calling user_medias with uid=%s limit=%s", uid, limit)
             if asyncio.iscoroutinefunction(um):
-                medias_raw = await um(f"user_{sess.account_id}", limit)
+                medias_raw = await um(uid, limit)
             else:
-                medias_raw = um(f"user_{sess.account_id}", limit)
-    except Exception:
+                medias_raw = um(uid, limit)
+
+        logging.getLogger(__name__).debug("medias_raw returned type=%s count=%s", type(medias_raw), len(medias_raw) if medias_raw else 0)
+
+        # If provider returned no medias, attempt a probe fallback which applies proxy/retries
+        if not medias_raw:
+            logging.getLogger(__name__).warning("medias endpoint returned empty from client; attempting probe_medias fallback for session %s", session_id)
+            try:
+                # probe_medias expects a uid; reuse same uid variable
+                probe_result = await session_manager.probe_medias(session_id, uid, limit)
+                if probe_result:
+                    medias_raw = probe_result
+            except Exception as e:
+                logging.getLogger(__name__).exception("probe_medias fallback failed for %s: %s", session_id, e)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.getLogger(__name__).exception("Unexpected exception in list_medias: %s", e)
         raise HTTPException(status_code=500, detail="failed to fetch medias")
 
     # Normalize medias_raw into MediaItem list
@@ -83,6 +116,8 @@ async def list_medias(request: Request, session_id: str = Query(...), limit: int
             items.append(MediaItem(id=mid, caption=caption, thumbnail_url=thumb))
         except Exception:
             continue
+
+    logging.getLogger(__name__).debug("Returning %s media items for session %s", len(items), session_id)
 
     next_cursor = _build_cursor_from_provider(next_provider_cursor, sess.account_id) if next_provider_cursor else None
     meta = PaginationMeta(next_cursor=next_cursor, count_returned=len(items))

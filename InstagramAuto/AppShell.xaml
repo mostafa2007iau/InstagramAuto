@@ -1,68 +1,129 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Shell
-    x:Class="InstagramAuto.Client.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:views="clr-namespace:InstagramAuto.Client.Views"
-    Title="AutoInsta"
-    FlowDirection="LeftToRight">
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:InstagramAuto.Client.Views"
+       x:Class="InstagramAuto.Client.AppShell"
+       Title="اتوماسیون اینستاگرام">
 
-    <!--  Flyout Header  -->
-    <Shell.FlyoutHeader>
-        <StackLayout Padding="20" BackgroundColor="#2196F3">
-            <Label
-                FontAttributes="Bold"
-                FontSize="24"
-                Text="AutoInsta"
-                TextColor="White" />
-        </StackLayout>
-    </Shell.FlyoutHeader>
+    <Shell.Resources>
+        <ResourceDictionary>
+            <Style x:Key="BaseStyle" TargetType="Element">
+                <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray900}}" />
+                <Setter Property="Shell.ForegroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray200}}" />
+                <Setter Property="Shell.TitleColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
+                <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}" />
+                <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+                <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
+                <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+            </Style>
+            <Style TargetType="TabBar" BasedOn="{StaticResource BaseStyle}" />
+            <Style TargetType="FlyoutItem" BasedOn="{StaticResource BaseStyle}" />
+        </ResourceDictionary>
+    </Shell.Resources>
 
-    <!--  Routes registration  -->
-    <Shell.ItemTemplate>
-        <DataTemplate>
-            <ShellSection Title="{Binding Title}" Icon="{Binding Icon}">
-                <ShellContent ContentTemplate="{Binding ContentTemplate}" />
-            </ShellSection>
-        </DataTemplate>
-    </Shell.ItemTemplate>
-    <ShellContent
-        Title="لاگین"
-        ContentTemplate="{DataTemplate views:LoginPage}"
-        Route="LoginPage" />
-    <!--  Main menu items  -->
-    <ShellContent
-        Title="داشبورد"
-        ContentTemplate="{DataTemplate views:DashboardPage}"
-        Route="Home" />
-    <ShellContent
-        Title="پست ها"
-        ContentTemplate="{DataTemplate views:PostsPage}"
-        Route="PostsPage" />
-    <ShellContent
-        Title="وظایف"
-        ContentTemplate="{DataTemplate views:TasksPage}"
-        Route="TasksPage" />
-    <ShellContent
-        Title="لاگ ها"
-        ContentTemplate="{DataTemplate views:LogsPage}"
-        Route="LogsPage" />
-    <ShellContent
-        Title="قوانین"
-        ContentTemplate="{DataTemplate views:RulesPage}"
-        Route="RulesPage" />
-    <ShellContent
-        Title="تنظیمات"
-        ContentTemplate="{DataTemplate views:SettingsPage}"
-        Route="SettingsPage" />
-    <ShellContent
-        Title="استوریها"
-        ContentTemplate="{DataTemplate views:StoriesPage}"
-        Route="StoriesPage" />
+    <!-- Login & Challenge Routes -->
+    <ShellContent Route="login"
+                  FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate views:LoginPage}" />
+    
+    <ShellContent Route="challenge"
+                  FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate views:ChallengePage}" />
 
-    <ShellContent
-        Title="Challenge"
-        ContentTemplate="{DataTemplate views:ChallengePage}"
-        Route="challenge" />
+    <!-- Main Menu -->
+    <TabBar>
+        <!-- Dashboard Tab -->
+        <Tab Title="داشبورد" Icon="dashboard.png">
+            <ShellContent ContentTemplate="{DataTemplate views:DashboardPage}"
+                         Route="dashboard" />
+        </Tab>
+
+        <!-- Content Management Tab -->
+        <Tab Title="محتوا" Icon="content.png">
+            <ShellContent Title="پست‌ها" 
+                         Icon="posts.png"
+                         ContentTemplate="{DataTemplate views:PostsPage}"
+                         Route="posts" />
+            
+            <ShellContent Title="استوری‌ها"
+                         Icon="stories.png"
+                         ContentTemplate="{DataTemplate views:StoriesPage}"
+                         Route="stories" />
+            
+            <ShellContent Title="کامنت‌ها"
+                         Icon="comments.png"
+                         ContentTemplate="{DataTemplate views:CommentsPage}"
+                         Route="comments" />
+        </Tab>
+
+        <!-- Automation Tab -->
+        <Tab Title="اتوماسیون" Icon="automation.png">
+            <ShellContent Title="قوانین"
+                         Icon="rules.png"
+                         ContentTemplate="{DataTemplate views:RulesPage}"
+                         Route="rules" />
+            
+            <ShellContent Title="ویرایش قانون"
+                         Icon="edit_rule.png"
+                         ContentTemplate="{DataTemplate views:RuleEditorPage}"
+                         Route="rule_editor" />
+            
+            <ShellContent Title="وظایف"
+                         Icon="tasks.png"
+                         ContentTemplate="{DataTemplate views:TasksPage}"
+                         Route="tasks" />
+            
+            <ShellContent Title="خروجی/ورودی"
+                         Icon="import_export.png"
+                         ContentTemplate="{DataTemplate views:ImportExportPage}"
+                         Route="import_export" />
+        </Tab>
+
+        <!-- Monitoring Tab -->
+        <Tab Title="مانیتورینگ" Icon="monitoring.png">
+            <ShellContent Title="فعالیت‌های زنده"
+                         Icon="live.png"
+                         ContentTemplate="{DataTemplate views:LiveActivityPage}"
+                         Route="live_activity" />
+
+            <ShellContent Title="تاریخچه پاسخ‌ها"
+                         Icon="history.png"
+                         ContentTemplate="{DataTemplate views:ReplyHistoryPage}"
+                         Route="reply_history" />
+            
+            <ShellContent Title="آمار"
+                         Icon="stats.png"
+                         ContentTemplate="{DataTemplate views:StatsPage}"
+                         Route="stats" />
+            
+            <ShellContent Title="لاگ‌ها"
+                         Icon="logs.png"
+                         ContentTemplate="{DataTemplate views:LogsPage}"
+                         Route="logs" />
+        </Tab>
+
+        <!-- Settings Tab -->
+        <Tab Title="تنظیمات" Icon="settings.png">
+            <ShellContent Title="تنظیمات عمومی"
+                         Icon="general_settings.png"
+                         ContentTemplate="{DataTemplate views:SettingsPage}"
+                         Route="settings" />
+            
+            <ShellContent Title="مدیریت سشن‌ها"
+                         Icon="sessions.png"
+                         ContentTemplate="{DataTemplate views:SessionManagerPage}"
+                         Route="sessions" />
+            
+            <ShellContent Title="پروکسی"
+                         Icon="proxy.png"
+                         ContentTemplate="{DataTemplate views:ProxySettingsPage}"
+                         Route="proxy_settings" />
+            
+            <ShellContent Title="محدودیت‌ها"
+                         Icon="risk.png"
+                         ContentTemplate="{DataTemplate views:RiskSettingsPage}"
+                         Route="risk_settings" />
+        </Tab>
+    </TabBar>
 
 </Shell>

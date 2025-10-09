@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://156.236.31.41:8000",
+      "url": "http://217.197.97.69:8000",
       "description": "Production API server"
     }
   ],

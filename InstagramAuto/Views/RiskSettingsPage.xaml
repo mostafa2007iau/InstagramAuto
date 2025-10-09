@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:InstagramAuto.Client.Models"
+             x:Class="InstagramAuto.Client.Views.RiskSettingsPage"
+             Title="Risk Settings">
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout Padding="20">
+                <Label Text="Risk Management Settings"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,20"/>
+
+                <!-- Enable/Disable Limitations -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Enable Safety Limitations"/>
+                        <Switch IsToggled="{Binding LimitationsEnabled}"
+                                HorizontalOptions="Start"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Random Delay -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Random Delay" FontSize="18"/>
+                        <Label Text="Add random delay to actions (percentage)"/>
+                        <Slider Value="{Binding RandomDelayPercentage}"
+                                Maximum="100"
+                                Minimum="0"/>
+                        <Label Text="{Binding RandomDelayPercentage, StringFormat='{0}%'}"
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Action Limits -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Daily Limits" FontSize="18" Margin="0,0,0,10"/>
+
+                        <Label Text="Comment Replies per Day"/>
+                        <Entry Text="{Binding MaxActionsPerDay[CommentReply]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Direct Messages per Day"/>
+                        <Entry Text="{Binding MaxActionsPerDay[DirectMessage]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Likes per Day"/>
+                        <Entry Text="{Binding MaxActionsPerDay[Like]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Follows per Day"/>
+                        <Entry Text="{Binding MaxActionsPerDay[Follow]}"
+                               Keyboard="Numeric"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Delays Between Actions -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Minimum Delays (seconds)" FontSize="18" Margin="0,0,0,10"/>
+
+                        <Label Text="Between Comment Replies"/>
+                        <Entry Text="{Binding MinDelayBetweenActions[CommentReply]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Between Direct Messages"/>
+                        <Entry Text="{Binding MinDelayBetweenActions[DirectMessage]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Between Likes"/>
+                        <Entry Text="{Binding MinDelayBetweenActions[Like]}"
+                               Keyboard="Numeric"/>
+
+                        <Label Text="Between Follows"/>
+                        <Entry Text="{Binding MinDelayBetweenActions[Follow]}"
+                               Keyboard="Numeric"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Actions -->
+                <StackLayout Orientation="Horizontal"
+                            HorizontalOptions="Center"
+                            Spacing="20">
+                    <Button Text="Reset to Default"
+                            Command="{Binding ResetToDefaultCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#FF9800"
+                            TextColor="White"
+                            WidthRequest="120"/>
+
+                    <Button Text="Save"
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#2196F3"
+                            TextColor="White"
+                            WidthRequest="120"/>
+                </StackLayout>
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                 IsRunning="{Binding IsBusy}"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Margin="0,20,0,0"/>
+
+                <!-- Warning -->
+                <Label Text="Warning: These settings help prevent Instagram detection. Change with caution."
+                       TextColor="#FF5722"
+                       FontSize="12"
+                       HorizontalOptions="Center"
+                       Margin="0,20,0,0"/>
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

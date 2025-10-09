@@ -1,144 +1,116 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
-using InstagramAuto.Client.Helpers;
+using Microsoft.Maui.Controls;
+using System.Linq;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace InstagramAuto.Client.ViewModels
 {
-    /// <summary>
-    /// Persian:
-    ///   ویومدل صفحه Rules برای مدیریت قاعده‌های خودکار کامنت/دایرکت.
-    /// English:
-    ///   ViewModel for RulesPage to manage automatic comment/DM rules.
-    /// </summary>
     public class RulesViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
+        private string _mediaId;
+        private string _postCaption;
+        private ObservableCollection<RuleItem> _rules = new();
         private bool _isBusy;
         private string _errorMessage;
-        private string _cursor;
-
-        private string _newName;
-        private string _newExpression;
-        private bool _newEnabled = true;
-
         private string _errorDetails;
 
-        public ObservableCollection<RuleOut> Rules { get; } = new ObservableCollection<RuleOut>();
+        public string MediaId 
+        { 
+            get => _mediaId;
+            set { _mediaId = value; OnPropertyChanged(); }
+        }
+
+        public string PostCaption
+        {
+            get => _postCaption;
+            set { _postCaption = value; OnPropertyChanged(); }
+        }
+
+        public ObservableCollection<RuleItem> Rules
+        {
+            get => _rules;
+            set { _rules = value; OnPropertyChanged(); OnPropertyChanged(nameof(RulesCount)); }
+        }
+
+        public int RulesCount => Rules?.Count ?? 0;
 
         public bool IsBusy
         {
             get => _isBusy;
-            set
-            {
-                if (_isBusy == value) return;
-                _isBusy = value;
-                OnPropertyChanged();
-                ((Command)LoadCommand).ChangeCanExecute();
-                ((Command)CreateCommand).ChangeCanExecute();
-            }
+            set { _isBusy = value; OnPropertyChanged(); }
         }
 
         public string ErrorMessage
         {
             get => _errorMessage;
-            set
-            {
-                if (_errorMessage == value) return;
-                _errorMessage = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(HasError));
-            }
+            set { _errorMessage = value; OnPropertyChanged(); }
         }
-
-        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
         public string ErrorDetails
         {
             get => _errorDetails;
-            set
-            {
-                if (_errorDetails == value) return;
-                _errorDetails = value;
-                OnPropertyChanged();
-            }
+            set { _errorDetails = value; OnPropertyChanged(); }
         }
 
-        /// <summary>  
-        /// Persian: نام قاعده جدید  
-        /// English: New rule name  
-        /// </summary>
-        public string NewName
-        {
-            get => _newName;
-            set { if (_newName == value) return; _newName = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>  
-        /// Persian: عبارت JSON-Logic  
-        /// English: JSON-Logic expression  
-        /// </summary>
-        public string NewExpression
-        {
-            get => _newExpression;
-            set { if (_newExpression == value) return; _newExpression = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>  
-        /// Persian: وضعیت فعال‌بودن قاعده  
-        /// English: Whether the rule is enabled  
-        /// </summary>
-        public bool NewEnabled
-        {
-            get => _newEnabled;
-            set { if (_newEnabled == value) return; _newEnabled = value; OnPropertyChanged(); }
-        }
-
-        public ICommand LoadCommand { get; }
-        public ICommand CreateCommand { get; }
+        public ICommand AddRuleCommand { get; }
+        public ICommand EditRuleCommand { get; }
+        public ICommand DeleteRuleCommand { get; }
+        public ICommand ToggleRuleCommand { get; }
 
         public RulesViewModel(IAuthService authService)
         {
             _authService = authService;
-
-            LoadCommand = new Command(async () => await LoadRulesAsync(), () => !IsBusy);
-            CreateCommand = new Command(async () => await CreateRuleAsync(), () => !IsBusy);
+            
+            AddRuleCommand = new Command(async () => await AddRuleAsync());
+            EditRuleCommand = new Command<RuleItem>(async (rule) => await EditRuleAsync(rule));
+            DeleteRuleCommand = new Command<RuleItem>(async (rule) => await DeleteRuleAsync(rule));
+            ToggleRuleCommand = new Command<RuleItem>(async (rule) => await ToggleRuleAsync(rule));
         }
 
-        /// <summary>
-        /// Persian:
-        ///   بارگذاری فهرست قاعده‌ها از API.
-        /// English:
-        ///   Loads the list of rules from the API.
-        /// </summary>
+        public async Task InitializeAsync(string mediaId)
+        {
+            MediaId = mediaId;
+            await LoadRulesAsync();
+        }
+
         public async Task LoadRulesAsync()
         {
             if (IsBusy) return;
-            IsBusy = true;
-            ErrorMessage = string.Empty;
-            ErrorDetails = string.Empty;
 
             try
             {
+                IsBusy = true;
                 var session = await _authService.LoadSessionAsync();
-                var page = await _authService.GetRulesAsync(session.AccountId, 50, _cursor);
-
-                foreach (var rule in page.Items)
-                    if (!Rules.Any(r => r.Id == rule.Id))
-                        Rules.Add(rule);
-
-                _cursor = page.Meta.Next_cursor;
+                var rulesPage = await _authService.GetRulesAsync(session.AccountId);
+                
+                Rules.Clear();
+                foreach (var rule in rulesPage.Items.Where(r => r.MediaId == MediaId))
+                {
+                    // Create a RuleItem instance for UI using available data
+                    Rules.Add(new RuleItem
+                    {
+                        Id = rule.Id,
+                        Name = rule.Name,
+                        Account_id = rule.Account_id,
+                        Attachments = rule.AdditionalProperties != null && rule.AdditionalProperties.ContainsKey("attachments")
+                            ? JsonConvert.DeserializeObject<List<MediaAttachment>>(rule.AdditionalProperties["attachments"].ToString())
+                            : new List<MediaAttachment>(),
+                        Expression = rule.Expression,
+                        Enabled = rule.Enabled
+                    });
+                }
             }
             catch (Exception ex)
             {
-                var parsed = ErrorHelper.Parse(ex);
-                ErrorMessage = parsed.Message;
-                ErrorDetails = parsed.Details;
+                ErrorMessage = ex.Message;
+                ErrorDetails = ex.ToString();
             }
             finally
             {
@@ -146,53 +118,72 @@ namespace InstagramAuto.Client.ViewModels
             }
         }
 
-        /// <summary>
-        /// Persian:
-        ///   ایجاد یک قاعدهٔ جدید با داده‌های فرم و رفرش فهرست.
-        /// English:
-        ///   Creates a new rule using form data and refreshes the list.
-        /// </summary>
-        public async Task CreateRuleAsync()
+        private async Task AddRuleAsync()
         {
-            if (IsBusy) return;
-            if (string.IsNullOrWhiteSpace(NewName) || string.IsNullOrWhiteSpace(NewExpression))
+            var parameters = new Dictionary<string, object>
             {
-                ErrorMessage = "Name and expression cannot be empty.";
-                return;
-            }
+                { "mediaId", MediaId }
+            };
+            await Shell.Current.GoToAsync("rule_editor", parameters);
+        }
 
-            IsBusy = true;
-            ErrorMessage = string.Empty;
-            ErrorDetails = string.Empty;
+        private async Task EditRuleAsync(RuleItem rule)
+        {
+            if (rule == null) return;
+            
+            var parameters = new Dictionary<string, object>
+            {
+                { "ruleId", rule.Id },
+                { "mediaId", MediaId }
+            };
+            await Shell.Current.GoToAsync("rule_editor", parameters);
+        }
+
+        private async Task DeleteRuleAsync(RuleItem rule)
+        {
+            if (rule == null) return;
+
+            var confirm = await Shell.Current.DisplayAlert(
+                "تأیید حذف",
+                "آیا از حذف این قانون مطمئن هستید؟",
+                "بله",
+                "خیر");
+
+            if (!confirm) return;
 
             try
             {
-                var session = await _authService.LoadSessionAsync();
-                var ruleIn = new RuleIn
-                {
-                    Account_id = session.AccountId,
-                    Name = NewName,
-                    Expression = NewExpression,
-                    Enabled = NewEnabled
-                };
-
-                await _authService.CreateRuleAsync(ruleIn);
-
-                // ریست فرم
-                NewName = string.Empty;
-                NewExpression = string.Empty;
-                NewEnabled = true;
-
-                // ریست صفحه و بارگذاری دوباره
-                Rules.Clear();
-                _cursor = null;
-                await LoadRulesAsync();
+                IsBusy = true;
+                // TODO: Add delete API call
+                Rules.Remove(rule);
             }
             catch (Exception ex)
             {
-                var parsed = ErrorHelper.Parse(ex);
-                ErrorMessage = parsed.Message;
-                ErrorDetails = parsed.Details;
+                ErrorMessage = ex.Message;
+                ErrorDetails = ex.ToString();
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task ToggleRuleAsync(RuleItem rule)
+        {
+            if (rule == null) return;
+
+            try
+            {
+                IsBusy = true;
+                rule.Enabled = !rule.Enabled;
+                await _authService.SaveRuleAsync(rule);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                ErrorDetails = ex.ToString();
+                // Revert toggle if failed
+                rule.Enabled = !rule.Enabled;
             }
             finally
             {

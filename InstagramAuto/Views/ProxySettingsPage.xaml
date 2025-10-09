@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="InstagramAuto.Client.Views.ProxySettingsPage"
+             Title="Proxy Settings">
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout Padding="20">
+                <Label Text="Proxy Settings"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,20"/>
+
+                <!-- Enable/Disable Proxy -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Enable Proxy"/>
+                        <Switch IsToggled="{Binding IsEnabled}"
+                                HorizontalOptions="Start"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Proxy Configuration -->
+                <Frame BorderColor="Gray" Padding="10" Margin="0,0,0,20">
+                    <StackLayout>
+                        <Label Text="Proxy Configuration" FontSize="18" Margin="0,0,0,10"/>
+
+                        <Label Text="Address"/>
+                        <Entry Text="{Binding Address}"
+                               Placeholder="Enter proxy address"/>
+
+                        <Label Text="Port"/>
+                        <Entry Text="{Binding Port}"
+                               Keyboard="Numeric"
+                               Placeholder="Enter port number"/>
+
+                        <Label Text="Username (Optional)"/>
+                        <Entry Text="{Binding Username}"
+                               Placeholder="Enter username if required"/>
+
+                        <Label Text="Password (Optional)"/>
+                        <Entry Text="{Binding Password}"
+                               IsPassword="True"
+                               Placeholder="Enter password if required"/>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Actions -->
+                <StackLayout Orientation="Horizontal"
+                            HorizontalOptions="Center"
+                            Spacing="20">
+                    <Button Text="Test Proxy"
+                            Command="{Binding TestCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#4CAF50"
+                            TextColor="White"
+                            WidthRequest="120"/>
+
+                    <Button Text="Save"
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#2196F3"
+                            TextColor="White"
+                            WidthRequest="120"/>
+                </StackLayout>
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                 IsRunning="{Binding IsBusy}"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Margin="0,20,0,0"/>
+
+                <!-- Instructions -->
+                <Label Text="Note: Changes will take effect after saving and restarting the application."
+                       TextColor="Gray"
+                       FontSize="12"
+                       HorizontalOptions="Center"
+                       Margin="0,20,0,0"/>
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

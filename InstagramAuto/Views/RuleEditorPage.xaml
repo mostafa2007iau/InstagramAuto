@@ -8,20 +8,68 @@ English:
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="InstagramAuto.Client.Views.RuleEditorPage"
-             Title="Rule Editor">
+             Title="ویرایش قانون / Rule Editor">
     <ScrollView>
-        <StackLayout Padding="16" Spacing="12">
-            <Label Text="?????? ????? / Edit Rule" FontSize="22" HorizontalOptions="Center" />
-            <Entry Placeholder="??? ????? / Rule Name" Text="{Binding Name}" />
-            <Editor Placeholder="??? (JSONLogic) / Condition (JSONLogic)" HeightRequest="80" Text="{Binding Condition}" />
-            <Label Text="??????? (?? ?? ?? ????) / Replies (one per line)" />
-            <Editor HeightRequest="80" Text="{Binding RepliesText}" />
+        <StackLayout Padding="16" Spacing="14">
+            <Label Text="ویرایش قانون پاسخ‌دهی" FontSize="22" HorizontalOptions="Center" />
+
+            <!-- Rule Name -->
+            <Label Text="نام قانون (فارسی/انگلیسی)" />
+            <Entry Placeholder="مثال: پاسخ به سوالات" Text="{Binding Name}" />
+
+            <!-- Condition Builder -->
+            <Label Text="شرط (مثلاً: اگر متن کامنت شامل ... بود)" />
+            <StackLayout Orientation="Horizontal" Spacing="8">
+                <Picker Title="نوع شرط" ItemsSource="{Binding ConditionTypes}" SelectedItem="{Binding SelectedConditionType}" WidthRequest="120" />
+                <Entry Placeholder="مقدار شرط" Text="{Binding ConditionValue}" />
+            </StackLayout>
+            <Label Text="مثال: اگر متن کامنت شامل 'سلام' بود" FontSize="12" TextColor="Gray" />
+
+            <!-- Replies -->
+            <Label Text="پاسخ‌ها (متنی یا رسانه‌ای)" />
+            <CollectionView ItemsSource="{Binding Replies}" HeightRequest="100">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Orientation="Horizontal" Spacing="8">
+                            <Label Text="{Binding Text}" />
+                            <Image Source="{Binding AttachmentPreview}" HeightRequest="32" WidthRequest="32" IsVisible="{Binding HasAttachment}" />
+                            <Button Text="حذف" Command="{Binding BindingContext.RemoveReplyCommand, Source={x:Reference Name=RuleEditorPage}}" CommandParameter="{Binding .}" />
+                        </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <StackLayout Orientation="Horizontal" Spacing="8">
+                <Entry Placeholder="پاسخ متنی جدید" Text="{Binding NewReplyText}" WidthRequest="180" />
+                <Button Text="افزودن متن" Command="{Binding AddReplyCommand}" />
+                <Button Text="افزودن تصویر" Command="{Binding AddImageReplyCommand}" />
+                <Button Text="افزودن لینک" Command="{Binding AddLinkReplyCommand}" />
+            </StackLayout>
+
+            <!-- Send DM -->
+            <Label Text="ارسال دایرکت؟" />
             <Switch IsToggled="{Binding SendDM}" />
-            <Label Text="????????? (?? ?? ?? ????) / DMs (one per line)" />
-            <Editor HeightRequest="80" Text="{Binding DMsText}" />
+            <StackLayout IsVisible="{Binding SendDM}">
+                <Label Text="متن دایرکت" />
+                <Editor Placeholder="متن پیام دایرکت" Text="{Binding DMText}" HeightRequest="60" />
+                <Button Text="افزودن پیوست به دایرکت" Command="{Binding AddDMImageCommand}" />
+                <CollectionView ItemsSource="{Binding DMAttachments}" HeightRequest="60">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <StackLayout Orientation="Horizontal" Spacing="8">
+                                <Image Source="{Binding AttachmentPreview}" HeightRequest="32" WidthRequest="32" />
+                                <Button Text="حذف" Command="{Binding BindingContext.RemoveDMAttachmentCommand, Source={x:Reference Name=RuleEditorPage}}" CommandParameter="{Binding .}" />
+                            </StackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </StackLayout>
+
+            <!-- Enable/Disable -->
+            <Label Text="فعال باشد؟" />
             <Switch IsToggled="{Binding Enabled}" />
-            <Label Text="???? / Enabled" />
-            <Button Text="????? / Save" Command="{Binding SaveCommand}" />
+
+            <!-- Save Button -->
+            <Button Text="ذخیره" Command="{Binding SaveCommand}" />
             <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding HasError}" />
         </StackLayout>
     </ScrollView>

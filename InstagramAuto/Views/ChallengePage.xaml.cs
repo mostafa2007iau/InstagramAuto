@@ -1,5 +1,6 @@
 ﻿using InstagramAuto.Client.ViewModels;
 using Microsoft.Maui.Controls;
+using InstagramAuto.Client.Services;
 
 namespace InstagramAuto.Client.Views
 {
@@ -14,7 +15,12 @@ namespace InstagramAuto.Client.Views
         {
             InitializeComponent();
 
-            ViewModel = new ChallengeViewModel();
+            // Resolve services from MAUI context
+            var serviceProvider = this.Handler?.MauiContext?.Services
+                ?? Microsoft.Maui.Controls.Application.Current?.Handler?.MauiContext?.Services;
+            var challengeService = (IChallengeService)serviceProvider?.GetService(typeof(IChallengeService));
+            var authService = (IAuthService)serviceProvider?.GetService(typeof(IAuthService));
+            ViewModel = new ChallengeViewModel(challengeService, authService);
             BindingContext = ViewModel;
         }
 

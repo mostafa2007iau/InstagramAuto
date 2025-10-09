@@ -224,8 +224,8 @@ namespace InstagramAuto.Client.ViewModels
                 var session = await _authService.LoadSessionAsync();
                 var dto = new DirectMessageIn
                 {
-                    Message = ReplyMessage,
-                    LinkUrl = LinkUrl,
+                    Text = ReplyMessage,
+                    Link = LinkUrl,
                     ImageUrl = ImageUrl
                 };
                 await _apiClient.ReplyToStoryAsync(

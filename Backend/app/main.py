@@ -13,7 +13,9 @@ English:
 """
 
 import os
+import asyncio
 from fastapi import FastAPI, Response
+from contextlib import asynccontextmanager
 from app.routers import (
     accounts_router,
     medias_router,
@@ -31,17 +33,51 @@ from app.routers import (
 from app.middleware.verbosity_middleware import VerbosityMiddleware, default_rate_limit, strict_rate_limit
 from app.db import init_db
 from app.services import telemetry_service
+from app.services.job_processor import JobProcessor
+from app.services.rate_limiter import RateLimiter
+from app.database.jobs_repository import JobsRepository
+from app.database.rules_repository import RulesRepository
+from app.database.settings_repository import SettingsRepository
+from app.services.insta_client_factory import InstaClientFactory
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis  # redis-py async client
+
+# Create repositories
+jobs_repo = JobsRepository()
+rules_repo = RulesRepository()
+settings_repo = SettingsRepository()
+
+# Create services
+rate_limiter = RateLimiter(settings_repo)
+client_factory = InstaClientFactory()
+
+# Create job processor
+job_processor = JobProcessor(
+    client_factory=client_factory,
+    jobs_repo=jobs_repo,
+    rules_repo=rules_repo,
+    rate_limiter=rate_limiter
+)
 
 app = FastAPI(
     title="InstaAutomation Backend",
     description="Backend for Insta automation with i18n, per-session proxy and pagination",
     version="v1",
+    lifespan=lambda app: lifespan(app, job_processor),
 )
 
 # ✅ اضافه کردن middleware سفارشی
 app.add_middleware(VerbosityMiddleware)
+
+
+async def lifespan(app: FastAPI, job_processor: JobProcessor):
+    # Start job processor
+    asyncio.create_task(job_processor.start())
+    
+    yield
+    
+    # Stop job processor
+    await job_processor.stop()
 
 
 @app.on_event("startup")
@@ -95,3 +131,7 @@ except Exception:
 
 app.include_router(health_router.router)
 app.include_router(inbound_router.router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

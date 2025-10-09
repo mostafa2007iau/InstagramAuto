@@ -10,40 +10,38 @@ namespace InstagramAuto.Client.ViewModels
 {
     /// <summary>
     /// Persian:
-    ///   ?????? ????? ???? ????????? ???? ?? ???.
+    ///     ?????? ???? ?????? ? ???????.
     /// English:
-    ///   ViewModel for displaying reply stats per post.
+    ///     ViewModel for reply and action statistics.
     /// </summary>
     public class StatsViewModel : BaseViewModel
     {
+        private readonly IStatsCollector _statsCollector;
         private readonly IAuthService _authService;
+        private ObservableCollection<ReplyStatItem> _replyStats = new();
+        private string _accountId;
         private bool _isBusy;
         private string _errorMessage;
 
-        public ObservableCollection<ReplyStatItem> Items { get; } = new ObservableCollection<ReplyStatItem>();
-        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); ((Command)RefreshCommand).ChangeCanExecute(); } }
-        public string ErrorMessage { get => _errorMessage; set { _errorMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasError)); } }
-        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
-        public ICommand RefreshCommand { get; }
+        public ObservableCollection<ReplyStatItem> ReplyStats { get => _replyStats; set { _replyStats = value; OnPropertyChanged(); } }
+        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
+        public string ErrorMessage { get => _errorMessage; set { _errorMessage = value; OnPropertyChanged(); } }
 
-        public StatsViewModel(IAuthService authService)
+        public StatsViewModel(IStatsCollector statsCollector, IAuthService authService)
         {
+            _statsCollector = statsCollector;
             _authService = authService;
-            RefreshCommand = new Command(async () => await LoadAsync(), () => !IsBusy);
         }
 
         public async Task LoadAsync()
         {
-            if (IsBusy) return;
-            IsBusy = true;
-            ErrorMessage = string.Empty;
             try
             {
+                IsBusy = true;
                 var session = await _authService.LoadSessionAsync();
-                var stats = await _authService.GetReplyStatsAsync(session.AccountId);
-                Items.Clear();
-                foreach (var s in stats)
-                    Items.Add(s);
+                _accountId = session.AccountId;
+                var stats = await _statsCollector.GetReplyStatsAsync(_accountId);
+                ReplyStats = new ObservableCollection<ReplyStatItem>(stats);
             }
             catch (Exception ex)
             {

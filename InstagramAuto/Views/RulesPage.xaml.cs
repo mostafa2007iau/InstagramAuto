@@ -23,7 +23,7 @@ namespace InstagramAuto.Client.Views
         {
             if (BindingContext is RulesViewModel vm)
             {
-                var textToCopy = string.IsNullOrEmpty(vm.ErrorDetails) ? vm.ErrorMessage : vm.ErrorDetails;
+                var textToCopy = string.IsNullOrEmpty(vm.ErrorMessage) ? vm.ErrorMessage : vm.ErrorDetails;
                 if (!string.IsNullOrEmpty(textToCopy))
                 {
                     await Clipboard.SetTextAsync(textToCopy);

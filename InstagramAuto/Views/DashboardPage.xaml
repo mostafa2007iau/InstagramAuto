@@ -1,31 +1,218 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    x:Class="InstagramAuto.Client.Views.DashboardPage"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
-    Title="Dashboard">
-    <ScrollView>
-        <StackLayout Padding="20" Spacing="15">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+             x:Class="InstagramAuto.Client.Views.DashboardPage"
+             Title="داشبورد">
 
-            <Label
-                FontAttributes="Bold"
-                FontSize="24"
-                HorizontalOptions="Center"
-                Text="Welcome to AutoInsta" />
+    <Grid RowDefinitions="Auto,*"
+          RowSpacing="16"
+          Padding="16">
 
-            <Button Command="{Binding NavigateToPostsCommand}" Text="Posts" />
+        <!-- Header -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto">
+            
+            <VerticalStackLayout>
+                <Label Text="خوش آمدید"
+                       Style="{StaticResource PageTitle}" />
+                <Label Text="{Binding Username}"
+                       Style="{StaticResource SectionTitle}" />
+            </VerticalStackLayout>
 
-            <Button Command="{Binding NavigateToTasksCommand}" Text="Tasks" />
+            <Frame Grid.Column="1"
+                   Style="{StaticResource StatusBadge}"
+                   BackgroundColor="{Binding ConnectionStatus, Converter={StaticResource StatusColorConverter}}">
+                <HorizontalStackLayout Spacing="8">
+                    <Image Source="{Binding ConnectionStatus, Converter={StaticResource StatusIconConverter}}"
+                           HeightRequest="16"
+                           WidthRequest="16" />
+                    <Label Text="{Binding ConnectionStatus}"
+                           TextColor="White"
+                           FontSize="12" />
+                </HorizontalStackLayout>
+            </Frame>
+        </Grid>
 
-            <Button Command="{Binding NavigateToLogsCommand}" Text="Logs" />
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16">
+                
+                <!-- Quick Stats -->
+                <Grid ColumnDefinitions="*,*,*"
+                      ColumnSpacing="16">
+                    
+                    <!-- Active Rules -->
+                    <Frame Style="{StaticResource BaseCard}"
+                           Grid.Column="0">
+                        <VerticalStackLayout>
+                            <Label Text="قوانین فعال"
+                                   FontSize="14"
+                                   TextColor="{StaticResource Gray500}" />
+                            <Label Text="{Binding ActiveRulesCount}"
+                                   FontSize="24"
+                                   FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
 
-            <Button Command="{Binding NavigateToRulesCommand}" Text="Rules" />
+                    <!-- Pending Tasks -->
+                    <Frame Style="{StaticResource BaseCard}"
+                           Grid.Column="1">
+                        <VerticalStackLayout>
+                            <Label Text="وظایف در انتظار"
+                                   FontSize="14"
+                                   TextColor="{StaticResource Gray500}" />
+                            <Label Text="{Binding PendingTasksCount}"
+                                   FontSize="24"
+                                   FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
 
-            <Button Command="{Binding NavigateToSettingsCommand}" Text="Settings" />
+                    <!-- Today's Actions -->
+                    <Frame Style="{StaticResource BaseCard}"
+                           Grid.Column="2">
+                        <VerticalStackLayout>
+                            <Label Text="عملیات امروز"
+                                   FontSize="14"
+                                   TextColor="{StaticResource Gray500}" />
+                            <Label Text="{Binding TodayActionsCount}"
+                                   FontSize="24"
+                                   FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
 
-            <Button Command="{Binding NavigateToStoriesCommand}" Text="Stories" />
+                <!-- Recent Activity -->
+                <Frame Style="{StaticResource BaseCard}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="فعالیت‌های اخیر"
+                               FontAttributes="Bold"
+                               Margin="0,0,0,8" />
 
-        </StackLayout>
-    </ScrollView>
+                        <CollectionView ItemsSource="{Binding RecentActivities}"
+                                      HeightRequest="200"
+                                      Style="{StaticResource BaseList}">
+                            <CollectionView.EmptyView>
+                                <Label Text="هیچ فعالیتی ثبت نشده است"
+                                       Style="{StaticResource EmptyStateMessage}" />
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                          Padding="8">
+                                        <Image Source="{Binding Status, Converter={StaticResource StatusIconConverter}}"
+                                               HeightRequest="24"
+                                               WidthRequest="24" />
+                                        
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Description}"
+                                               LineBreakMode="TailTruncation" />
+                                        
+                                        <Label Grid.Column="2"
+                                               Text="{Binding Timestamp, Converter={StaticResource TimeAgoConverter}}"
+                                               TextColor="{StaticResource Gray500}"
+                                               FontSize="12" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <Button Text="مشاهده همه"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ViewAllActivitiesCommand}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Quick Actions -->
+                <Frame Style="{StaticResource BaseCard}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="دسترسی سریع"
+                               FontAttributes="Bold"
+                               Margin="0,0,0,8" />
+
+                        <Grid ColumnDefinitions="*,*"
+                              RowDefinitions="Auto,Auto"
+                              RowSpacing="8"
+                              ColumnSpacing="8">
+
+                            <Button Grid.Row="0" Grid.Column="0"
+                                    Text="قانون جدید"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding CreateRuleCommand}" />
+
+                            <Button Grid.Row="0" Grid.Column="1"
+                                    Text="مدیریت وظایف"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding ManageTasksCommand}" />
+
+                            <Button Grid.Row="1" Grid.Column="0"
+                                    Text="تنظیمات"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding OpenSettingsCommand}" />
+
+                            <Button Grid.Row="1" Grid.Column="1"
+                                    Text="آمار"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding ViewStatsCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- System Health -->
+                <Frame Style="{StaticResource BaseCard}">
+                    <Grid ColumnDefinitions="*,*,*"
+                          ColumnSpacing="16">
+
+                        <!-- CPU Usage -->
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="CPU"
+                                   FontSize="12"
+                                   TextColor="{StaticResource Gray500}" />
+                            <ProgressBar Progress="{Binding CpuUsage}"
+                                        ProgressColor="{Binding CpuUsage, Converter={StaticResource UsageColorConverter}}" />
+                            <Label Text="{Binding CpuUsage, StringFormat='{0:P0}'}"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+
+                        <!-- Memory Usage -->
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="Memory"
+                                   FontSize="12"
+                                   TextColor="{StaticResource Gray500}" />
+                            <ProgressBar Progress="{Binding MemoryUsage}"
+                                        ProgressColor="{Binding MemoryUsage, Converter={StaticResource UsageColorConverter}}" />
+                            <Label Text="{Binding MemoryUsage, StringFormat='{0:P0}'}"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+
+                        <!-- Queue Size -->
+                        <VerticalStackLayout Grid.Column="2">
+                            <Label Text="Queue"
+                                   FontSize="12"
+                                   TextColor="{StaticResource Gray500}" />
+                            <ProgressBar Progress="{Binding QueueUsage}"
+                                        ProgressColor="{Binding QueueUsage, Converter={StaticResource UsageColorConverter}}" />
+                            <Label Text="{Binding QueueSize}"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Loading -->
+        <ActivityIndicator Grid.RowSpan="2"
+                          Style="{StaticResource LoadingIndicator}"
+                          IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}" />
+
+        <!-- Error -->
+        <Label Grid.RowSpan="2"
+               Style="{StaticResource ErrorMessage}"
+               Text="{Binding ErrorMessage}"
+               IsVisible="{Binding HasError}" />
+
+    </Grid>
+
 </ContentPage>

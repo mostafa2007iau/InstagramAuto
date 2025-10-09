@@ -1,30 +1,173 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!--
-Persian:
-    ???? ????? ?????????? ???? (?? ??? ????? ?? ??????????? ???).
-English:
-    Page for displaying live or scheduled activities.
--->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+             xmlns:models="clr-namespace:InstagramAuto.Client.Models"
              x:Class="InstagramAuto.Client.Views.LiveActivityPage"
-             Title="Live Activity">
-    <StackLayout Padding="16" Spacing="10">
-        <Label Text="?????????? ???? / Live Activities" FontSize="22" HorizontalOptions="Center" />
-        <CollectionView ItemsSource="{Binding Items}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Frame Margin="5" Padding="8" BorderColor="Gray">
+             Title="فعالیت‌های زنده">
+
+    <ContentPage.Resources>
+        <Style x:Key="StatusBadge" TargetType="Frame">
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+        
+        <Style x:Key="ActivityCard" TargetType="Frame">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HasShadow" Value="True" />
+        </Style>
+
+        <Style x:Key="GroupHeader" TargetType="Label">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="Margin" Value="16,8" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Toolbar -->
+        <Grid Grid.Row="0" 
+              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+              Padding="16"
+              ColumnDefinitions="Auto,*,Auto,Auto"
+              ColumnSpacing="8">
+            
+            <!-- Filter -->
+            <Frame Grid.Column="0"
+                   Padding="8,4"
+                   BorderColor="{StaticResource Primary}">
+                <Picker Title="فیلتر وضعیت"
+                        SelectedIndexChanged="OnFilterChanged">
+                    <Picker.Items>
+                        <x:String>همه</x:String>
+                        <x:String>موفق</x:String>
+                        <x:String>خطا</x:String>
+                        <x:String>هشدار</x:String>
+                        <x:String>در حال انجام</x:String>
+                    </Picker.Items>
+                </Picker>
+            </Frame>
+
+            <!-- Auto-refresh Toggle -->
+            <HorizontalStackLayout Grid.Column="2" 
+                                 Spacing="8"
+                                 VerticalOptions="Center">
+                <Label Text="بروزرسانی خودکار" 
+                       VerticalOptions="Center" />
+                <Switch IsToggled="{Binding IsPaused, Converter={StaticResource InverseBoolConverter}}"
+                        OnColor="{StaticResource Primary}" />
+            </HorizontalStackLayout>
+
+            <!-- Clear Button -->
+            <Button Grid.Column="3"
+                    Text="پاک کردن"
+                    Command="{Binding ClearCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Danger}" />
+        </Grid>
+
+        <!-- Activities List -->
+        <RefreshView Grid.Row="1"
+                    IsRefreshing="{Binding IsRefreshing}"
+                    Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding ActivityGroups}"
+                          EmptyView="هیچ فعالیتی برای نمایش وجود ندارد">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
                         <StackLayout>
-                            <Label Text="{Binding Description}" FontSize="14" />
-                            <Label Text="{Binding Status}" FontSize="12" TextColor="Gray" />
-                            <Label Text="{Binding Timestamp}" FontSize="10" TextColor="DarkGray" />
+                            <!-- Date Header -->
+                            <Grid Padding="16,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <Label Text="{Binding DateText}"
+                                       FontAttributes="Bold"
+                                       FontSize="16" />
+                                
+                                <Label Grid.Column="1"
+                                       Text="{Binding Count, StringFormat='{0} فعالیت'}"
+                                       TextColor="{StaticResource Gray500}"
+                                       FontSize="14" />
+                            </Grid>
+
+                            <!-- Activities for this date -->
+                            <CollectionView ItemsSource="{Binding .}"
+                                          Margin="16,0">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Frame IsVisible="{Binding IsVisible}"
+                                               Style="{StaticResource ActivityCard}">
+                                            <Grid RowDefinitions="Auto,Auto"
+                                                  ColumnDefinitions="Auto,*,Auto">
+                                                
+                                                <!-- Status Icon -->
+                                                <Label Grid.RowSpan="2"
+                                                       Text="{Binding StatusIcon}"
+                                                       TextColor="{Binding StatusColor}"
+                                                       FontSize="24"
+                                                       VerticalOptions="Center"
+                                                       Margin="0,0,12,0" />
+
+                                                <!-- Description -->
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding Description}"
+                                                       LineBreakMode="WordWrap" />
+
+                                                <!-- Time -->
+                                                <Label Grid.Column="2"
+                                                       Text="{Binding TimeText}"
+                                                       TextColor="{StaticResource Gray500}"
+                                                       FontSize="12" />
+
+                                                <!-- Status Badge -->
+                                                <Frame Grid.Row="1"
+                                                       Grid.Column="1"
+                                                       Style="{StaticResource StatusBadge}"
+                                                       BackgroundColor="{Binding StatusColor}"
+                                                       Margin="0,8,0,0">
+                                                    <Label Text="{Binding Status}"
+                                                           TextColor="White"
+                                                           FontSize="12" />
+                                                </Frame>
+
+                                                <!-- Context Menu -->
+                                                <Button Grid.Row="1"
+                                                        Grid.Column="2"
+                                                        Text="⋮"
+                                                        BackgroundColor="Transparent"
+                                                        Clicked="OnActivityMenuClicked">
+                                                    <Button.CommandParameter>
+                                                        <MultiBinding>
+                                                            <Binding Path="." />
+                                                            <Binding Path="BindingContext" Source="{RelativeSource AncestorType={x:Type ContentPage}}" />
+                                                        </MultiBinding>
+                                                    </Button.CommandParameter>
+                                                </Button>
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
                         </StackLayout>
-                    </Frame>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-        <Button Text="???????? ???? / Refresh" Command="{Binding RefreshCommand}" />
-        <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding HasError}" />
-    </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Error Message -->
+        <Label Grid.Row="1"
+               Text="{Binding ErrorMessage}"
+               TextColor="{StaticResource Danger}"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyToBoolConverter}}" />
+    </Grid>
+
 </ContentPage>

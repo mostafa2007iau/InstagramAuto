@@ -1,8 +1,22 @@
-﻿using Newtonsoft.Json;
+﻿using InstagramAuto.Client.Models;
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 
-public class ChallengeService
+public interface IChallengeService
+{
+    Task<ChallengeState> GetStateAsync(string token);
+    Task<bool> ResolveAsync(string token, Dictionary<string, object> payload);
+    Task ListenEventsAsync(string token, Action<ChallengeEvent> onEvent);
+}
+
+public class ChallengeService : IChallengeService
 {
     private readonly HttpClient _http;
 

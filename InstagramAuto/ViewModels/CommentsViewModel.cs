@@ -67,7 +67,7 @@ namespace InstagramAuto.Client.ViewModels
                 foreach (var c in comments.Items)
                     if (!Items.Contains(c))
                         Items.Add(c);
-                _cursor = comments.Meta.NextCursor;
+                _cursor = comments.Meta.Next_cursor;
             }
             catch (System.Exception ex)
             {

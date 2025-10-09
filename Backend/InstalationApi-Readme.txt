@@ -8,8 +8,8 @@ git clone https://github.com/mostafa2007iau/InstagramAuto.git
 docker build -t instagramauto-backend .
 
 //ایجاد سرویس با اجرای docker-compose.yml
-docker-compose pull
-docker-compose up -d --force-recreate
+	docker-compose pull
+	docker-compose up -d --force-recreate
 
 //مشاهده لاگ
 docker logs -f insta_backend
@@ -30,3 +30,15 @@ docker container prune
 
 //حذف همه‌ی کانتینرها (در حال اجرا و متوقف) با یک دستور:
 docker rm $(docker ps -aq)
+
+//
+docker-compose down
+
+//ساخت دوباره بدون اجرای خودکار
+docker-compose build
+
+//
+docker-compose build --no-cache
+
+//
+لهفاdocker-compose up -d

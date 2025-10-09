@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Cards -->
+    <Style x:Key="BaseCard" TargetType="Frame">
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HasShadow" Value="True" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}" />
+    </Style>
+
+    <!-- Lists -->
+    <Style x:Key="BaseList" TargetType="CollectionView">
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="ItemsLayout">
+            <Setter.Value>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Headers -->
+    <Style x:Key="PageTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+        <Setter Property="Margin" Value="16,16,16,8" />
+    </Style>
+
+    <Style x:Key="SectionTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+        <Setter Property="Margin" Value="16,8" />
+    </Style>
+
+    <!-- Buttons -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource Primary}" />
+        <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+    </Style>
+
+    <Style x:Key="DangerButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+    </Style>
+
+    <!-- Forms -->
+    <Style x:Key="FormEntry" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="Margin" Value="0,4" />
+    </Style>
+
+    <Style x:Key="FormPicker" TargetType="Picker">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="Margin" Value="0,4" />
+    </Style>
+
+    <!-- Status Labels -->
+    <Style x:Key="StatusBadge" TargetType="Frame">
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="HasShadow" Value="False" />
+    </Style>
+
+    <!-- Loading -->
+    <Style x:Key="LoadingIndicator" TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource Primary}" />
+        <Setter Property="HeightRequest" Value="32" />
+        <Setter Property="WidthRequest" Value="32" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- Empty States -->
+    <Style x:Key="EmptyStateMessage" TargetType="Label">
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Margin" Value="32" />
+    </Style>
+
+    <!-- Error Messages -->
+    <Style x:Key="ErrorMessage" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource Danger}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Margin" Value="16,4" />
+    </Style>
+
+</ResourceDictionary>

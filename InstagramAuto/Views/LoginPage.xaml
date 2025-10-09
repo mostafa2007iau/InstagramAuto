@@ -5,63 +5,68 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Login">
 
-    <StackLayout Padding="20" Spacing="15">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
 
-        <!--  Header  -->
-        <Label
-            FontSize="24"
-            HorizontalOptions="Center"
-            Text="Welcome to AutoInsta" />
+            <!--  Header  -->
+            <Label
+                FontSize="24"
+                HorizontalOptions="Center"
+                Text="Welcome to AutoInsta" />
 
-        <!--  Username & Password  -->
-        <Entry
-            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-            Keyboard="Email"
-            Placeholder="Username"
-            Text="{Binding Username}" />
+            <!--  Username & Password  -->
+            <Entry Placeholder="Username" Text="{Binding Username}" />
+            <Entry
+                IsPassword="True"
+                Placeholder="Password"
+                Text="{Binding Password}" />
 
-        <Entry
-            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-            IsPassword="True"
-            Placeholder="Password"
-            Text="{Binding Password}" />
+            <!--  Login Button  -->
+            <Button Command="{Binding LoginCommand}" Text="Login" />
 
-        <!--  Login Button  -->
-        <Button x:Name="LoginButton"
-            Command="{Binding LoginCommand}"
-            IsEnabled="{Binding LoginCommand.CanExecute, Source={x:Reference Name=LoginButton}}"
-            Text="Login" />
+            <!--  Import Session Section  -->
+            <Label
+                Margin="0,20,0,0"
+                FontAttributes="Bold"
+                Text="Or import an existing session:" />
 
-        <!--  Busy Indicator  -->
-        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Editor
+                AutoSize="TextChanges"
+                HeightRequest="100"
+                Placeholder="Paste session JSON or base64 here"
+                Text="{Binding ImportSessionText}" />
 
-        <!--  Error Message  -->
-        <Label
-            IsVisible="{Binding HasError}"
-            Text="{Binding ErrorMessage}"
-            TextColor="Red" />
+            <Button Command="{Binding ImportSessionCommand}" Text="Import Session" />
 
-        <!-- Copy error button, only visible if there is an error -->
-        <Button
-            Text="Copy Error"
-            IsVisible="{Binding HasError}"
-            Clicked="OnCopyErrorClicked"
-            BackgroundColor="#eee"
-            TextColor="Black"
-            FontSize="12"
-            Padding="6,2"
-            HorizontalOptions="End" />
+            <!--  Busy Indicator  -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
-        <!-- Detailed JSON/Error details (read-only) -->
-        <Editor
-            IsVisible="{Binding HasError}"
-            Text="{Binding ErrorDetails}"
-            IsReadOnly="True"
-            AutoSize="TextChanges"
-            HeightRequest="180"
-            FontSize="12"
-            BackgroundColor="#f8f8f8"
-            TextColor="Black" />
+            <!--  Error Message  -->
+            <Label
+                IsVisible="{Binding HasError}"
+                Text="{Binding ErrorMessage}"
+                TextColor="Red" />
 
-    </StackLayout>
+            <Button
+                Padding="6,2"
+                BackgroundColor="#eee"
+                Clicked="OnCopyErrorClicked"
+                FontSize="12"
+                HorizontalOptions="End"
+                IsVisible="{Binding HasError}"
+                Text="Copy Error"
+                TextColor="Black" />
+
+            <Editor
+                AutoSize="TextChanges"
+                BackgroundColor="#f8f8f8"
+                FontSize="12"
+                HeightRequest="180"
+                IsReadOnly="True"
+                IsVisible="{Binding HasError}"
+                Text="{Binding ErrorDetails}"
+                TextColor="Black" />
+
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

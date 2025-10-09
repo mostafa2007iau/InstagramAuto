@@ -1,70 +1,140 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    x:Class="InstagramAuto.Client.Views.PostsPage"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
-    Title="پست‌ها">
-    <StackLayout Padding="20" Spacing="10">
-        <Label Text="لیست پست‌ها" FontSize="22" HorizontalOptions="Center" />
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:InstagramAuto.Client.ViewModels"
+             x:Class="InstagramAuto.Client.Views.PostsPage"
+             Title="مدیریت پست‌ها و قوانین"
+             BackgroundColor="#F4EEFF">
 
-        <!-- Error message and copy button -->
-        <StackLayout
-            IsVisible="{Binding HasError}"
-            BackgroundColor="#fff0f0"
-            Padding="8"
-            Spacing="4">
-            <Label
-                Text="{Binding ErrorMessage}"
-                TextColor="Red"
-                FontAttributes="Bold" />
-            <Button
-                Text="کپی خطا"
-                Clicked="OnCopyErrorClicked"
-                FontSize="12"
-                BackgroundColor="#eee"
-                TextColor="Black"
-                Padding="6,2"
-                HorizontalOptions="End" />
-            <Editor
-                Text="{Binding ErrorDetails}"
-                IsReadOnly="True"
-                AutoSize="TextChanges"
-                HeightRequest="120"
-                FontSize="12"
-                BackgroundColor="#f8f8f8"
-                TextColor="Black" />
-        </StackLayout>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="ایجاد قانون جدید" 
+                     Command="{Binding CreateRuleCommand}"
+                     IsEnabled="{Binding HasSelectedPosts}" />
+    </ContentPage.ToolbarItems>
 
-        <!-- Posts list -->
-        <CollectionView
-            Margin="10"
-            ItemsSource="{Binding Items}"
-            RemainingItemsThreshold="5"
-            RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
-            SelectionMode="Single"
-            SelectionChanged="OnPostSelected">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Frame
-                        Margin="0,4"
-                        Padding="8"
-                        BorderColor="#ddd"
-                        CornerRadius="8">
-                        <StackLayout Orientation="Horizontal" Spacing="10">
-                            <Image
-                                Source="{Binding Thumbnail_url}"
-                                WidthRequest="60"
-                                HeightRequest="60"
-                                Aspect="AspectFill" />
-                            <Label
-                                Text="{Binding Caption}"
-                                VerticalOptions="Center"
-                                FontSize="16" />
-                        </StackLayout>
-                    </Frame>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </StackLayout>
+    <Grid RowDefinitions="Auto,*" Padding="16">
+        <!-- Selection Info Bar -->
+        <Frame Grid.Row="0" 
+               IsVisible="{Binding HasSelectedPosts}"
+               BackgroundColor="#7B5BF2"
+               Margin="0,0,0,16">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="{Binding SelectionInfoText}" 
+                       TextColor="White"
+                       VerticalOptions="Center" />
+                <Button Grid.Column="1"
+                        Text="لغو انتخاب"
+                        Command="{Binding ClearSelectionCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="White" />
+            </Grid>
+        </Frame>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16">
+                <!-- Error Display -->
+                <Frame IsVisible="{Binding HasError}"
+                       BackgroundColor="#FFECEC"
+                       BorderColor="#FFB3B3"
+                       Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="#B00020"
+                               FontAttributes="Bold" />
+                        <Editor Text="{Binding ErrorDetails}"
+                                IsReadOnly="True"
+                                AutoSize="TextChanges" />
+                        <Button Text="کپی خطا"
+                                Command="{Binding CopyErrorCommand}"
+                                BackgroundColor="#F3F3F3"
+                                TextColor="#111" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Posts Grid -->
+                <CollectionView ItemsSource="{Binding Items}"
+                              SelectionMode="Multiple"
+                              SelectedItems="{Binding SelectedPosts}"
+                              RemainingItemsThreshold="6"
+                              RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                       Span="2"
+                                       HorizontalItemSpacing="8"
+                                       VerticalItemSpacing="8" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Padding="20" Spacing="8">
+                            <Label Text="هیچ پستی یافت نشد"
+                                   HorizontalTextAlignment="Center"
+                                   TextColor="#666" />
+                            <Button Text="بارگیری مجدد"
+                                    Command="{Binding RefreshCommand}"
+                                    HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Padding="12"
+                                   BorderColor="{Binding IsSelected, Converter={StaticResource SelectedItemBorderColorConverter}}"
+                                   BackgroundColor="White">
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+                                    <!-- Image -->
+                                    <Grid>
+                                        <Image Source="{Binding ThumbnailUrl}"
+                                               Aspect="AspectFill"
+                                               HeightRequest="160" />
+                                        
+                                        <!-- Rules Badge -->
+                                        <Frame IsVisible="{Binding HasRules}"
+                                               BackgroundColor="#7B5BF2"
+                                               Padding="8,4"
+                                               CornerRadius="12"
+                                               HorizontalOptions="End"
+                                               VerticalOptions="Start"
+                                               Margin="8">
+                                            <Label Text="{Binding RulesCount, StringFormat='{0} قانون'}"
+                                                   TextColor="White"
+                                                   FontSize="12" />
+                                        </Frame>
+                                    </Grid>
+
+                                    <!-- Caption -->
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Caption}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="2"
+                                           Margin="0,8" />
+
+                                    <!-- Actions -->
+                                    <Grid Grid.Row="2" 
+                                          ColumnDefinitions="Auto,*,Auto"
+                                          Margin="0,8,0,0">
+                                        <Button Grid.Column="0"
+                                                Text="مشاهده"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=ViewPostCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        
+                                        <Button Grid.Column="2"
+                                                Text="قوانین"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=ManageRulesCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </Grid>
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="1"
+                          IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center" />
+    </Grid>
 </ContentPage>

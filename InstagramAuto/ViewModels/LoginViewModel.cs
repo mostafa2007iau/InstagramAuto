@@ -1,14 +1,12 @@
-﻿// InstagramAuto.Client.ViewModels/LoginViewModel.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
-using InstagramAuto.Client.Views;
-using Newtonsoft.Json.Linq;
 
 namespace InstagramAuto.Client.ViewModels
 {
@@ -20,134 +18,89 @@ namespace InstagramAuto.Client.ViewModels
         private bool _isBusy;
         private string _errorMessage;
         private string _errorDetails;
+        private string _importSessionText;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public string Username
-        {
-            get => _username;
-            set { if (_username == value) return; _username = value; OnPropertyChanged(nameof(Username)); }
-        }
-
-        public string Password
-        {
-            get => _password;
-            set { if (_password == value) return; _password = value; OnPropertyChanged(nameof(Password)); }
-        }
-
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                if (_isBusy == value) return;
-                _isBusy = value;
-                OnPropertyChanged(nameof(IsBusy));
-                ((Command)LoginCommand).ChangeCanExecute();
-            }
-        }
-
-        public string ErrorMessage
-        {
-            get => _errorMessage;
-            set
-            {
-                if (_errorMessage == value) return;
-                _errorMessage = value;
-                OnPropertyChanged(nameof(ErrorMessage));
-                OnPropertyChanged(nameof(HasError));
-            }
-        }
-
-        // Detailed error (traceback / full JSON) for copy action
-        public string ErrorDetails
-        {
-            get => _errorDetails;
-            set
-            {
-                if (_errorDetails == value) return;
-                _errorDetails = value;
-                OnPropertyChanged(nameof(ErrorDetails));
-            }
-        }
-
+        public string Username { get => _username; set { _username = value; OnPropertyChanged(nameof(Username)); } }
+        public string Password { get => _password; set { _password = value; OnPropertyChanged(nameof(Password)); } }
+        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); } }
+        public string ErrorMessage { get => _errorMessage; set { _errorMessage = value; OnPropertyChanged(nameof(ErrorMessage)); OnPropertyChanged(nameof(HasError)); } }
+        public string ErrorDetails { get => _errorDetails; set { _errorDetails = value; OnPropertyChanged(nameof(ErrorDetails)); } }
         public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
+        public string ImportSessionText { get => _importSessionText; set { _importSessionText = value; OnPropertyChanged(nameof(ImportSessionText)); } }
+
         public ICommand LoginCommand { get; }
+        public ICommand ImportSessionCommand { get; }
 
         public LoginViewModel(IAuthService authService)
         {
             _authService = authService;
             LoginCommand = new Command(async () => await ExecuteLoginAsync(), () => !IsBusy);
+            ImportSessionCommand = new Command(async () => await ExecuteImportSessionAsync(), () => !IsBusy);
         }
 
         private async Task ExecuteLoginAsync()
         {
-            if (IsBusy)
-                return;
-
-            IsBusy = true;
-            ErrorMessage = string.Empty;
-            ErrorDetails = string.Empty;
-
             try
             {
-                // 1) احراز هویت
+                IsBusy = true;
+                ErrorMessage = string.Empty;
                 var session = await _authService.LoginAsync(Username, Password);
-
-                // 2) چک کردن challenge
                 if (!string.IsNullOrWhiteSpace(session?.ChallengeToken))
                 {
-                    // به صفحه‌ی Challenge منتقل شو
-                    var parameters = new Dictionary<string, object>
-                    {
-                        { "ChallengeToken", session.ChallengeToken },
-                        { "Username",       Username               },
-                        { "Password",       Password               }
-                    };
-
-                    // navigate to named route 'challenge'
-                    await Shell.Current.GoToAsync("challenge", true, parameters);
+                    await Shell.Current.GoToAsync($"challenge?ChallengeToken={session.ChallengeToken}&Username={Username}&Password={Password}");
                 }
                 else
                 {
-                    // لاگین موفق → صفحه‌ی Home (use absolute shell route)
                     await Shell.Current.GoToAsync("///Home");
                 }
             }
             catch (Exception ex)
             {
-                // try to extract structured details if backend included them
+                ErrorMessage = ex.Message;
+            }
+            finally { IsBusy = false; }
+        }
+
+        private async Task ExecuteImportSessionAsync()
+        {
+            if (string.IsNullOrWhiteSpace(ImportSessionText)) return;
+            try
+            {
+                IsBusy = true;
+                ErrorMessage = string.Empty;
+
+                Dictionary<string, object> payload;
                 try
                 {
-                    var msg = ex.Message ?? string.Empty;
-                    var detailsIndex = msg.IndexOf("Details:");
-                    if (detailsIndex >= 0)
-                    {
-                        ErrorMessage = msg.Substring(0, detailsIndex).Trim();
-                        ErrorDetails = msg.Substring(detailsIndex + "Details:".Length).Trim();
-                        // attempt to pretty-print JSON if possible
-                        try
-                        {
-                            var parsed = JToken.Parse(ErrorDetails);
-                            ErrorDetails = parsed.ToString(Newtonsoft.Json.Formatting.Indented);
-                        }
-                        catch { }
-                    }
-                    else
-                    {
-                        ErrorMessage = msg;
-                    }
+                    payload = JsonSerializer.Deserialize<Dictionary<string, object>>(ImportSessionText);
                 }
                 catch
                 {
-                    ErrorMessage = ex.Message;
+                    payload = new Dictionary<string, object>
+                    {
+                        ["account_id"] = Username ?? "imported",
+                        ["session_blob"] = ImportSessionText.Trim()
+                    };
                 }
+
+                var session = new AccountSession
+                {
+                    Id = payload.ContainsKey("id") ? payload["id"].ToString() : Guid.NewGuid().ToString(),
+                    AccountId = payload["account_id"].ToString(),
+                    SessionBlob = payload.ContainsKey("session_blob") ? payload["session_blob"].ToString() : null
+                };
+
+                await _authService.SaveSessionAsync(session);
+                await Shell.Current.GoToAsync("///Home");
             }
-            finally
+            catch (Exception ex)
             {
-                IsBusy = false;
+                ErrorMessage = $"Import failed: {ex.Message}";
             }
+            finally { IsBusy = false; }
         }
 
         protected void OnPropertyChanged(string name) =>

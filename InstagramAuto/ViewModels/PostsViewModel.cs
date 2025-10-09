@@ -7,15 +7,11 @@ using Microsoft.Maui.Controls;
 using InstagramAuto.Client.Models;
 using InstagramAuto.Client.Services;
 using InstagramAuto.Client.Helpers;
+using System.Globalization;
+using System.Collections.Generic;
 
 namespace InstagramAuto.Client.ViewModels
 {
-    /// <summary>
-    /// Persian:
-    ///   ویومدل صفحه Posts برای بارگذاری و نمایش پست‌ها/ریلز/تریلز.
-    /// English:
-    ///   ViewModel for PostsPage that loads and exposes media items.
-    /// </summary>
     public class PostsViewModel : BaseViewModel
     {
         private readonly IAuthService _authService;
@@ -24,19 +20,30 @@ namespace InstagramAuto.Client.ViewModels
         private string _errorMessage;
         private string _errorDetails;
         private string _cursor;
+        private ObservableCollection<PostItemViewModel> _items = new();
+        private ObservableCollection<PostItemViewModel> _selectedPosts = new();
 
-        /// <summary>
-        /// Persian: مجموعه‌ای قابل مشاهده از آیتم‌های مدیا  
-        /// English: Observable collection of media items.
-        /// </summary>
-        public ObservableCollection<MediaItem> Items { get; } = new ObservableCollection<MediaItem>();
+        public ObservableCollection<PostItemViewModel> Items 
+        { 
+            get => _items;
+            set { _items = value; OnPropertyChanged(); }
+        }
 
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        public ObservableCollection<PostItemViewModel> SelectedPosts
+        {
+            get => _selectedPosts;
+            set 
+            { 
+                _selectedPosts = value; 
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasSelectedPosts));
+                OnPropertyChanged(nameof(SelectionInfoText));
+            }
+        }
 
-        /// <summary>
-        /// Persian: آیا داده در حال بارگذاری است؟  
-        /// English: Indicates loading in progress.
-        /// </summary>
+        public bool HasSelectedPosts => SelectedPosts.Count > 0;
+        public string SelectionInfoText => $"{SelectedPosts.Count} پست انتخاب شده";
+
         public bool IsBusy
         {
             get => _isBusy;
@@ -46,13 +53,10 @@ namespace InstagramAuto.Client.ViewModels
                 _isBusy = value;
                 OnPropertyChanged();
                 ((Command)LoadMoreCommand).ChangeCanExecute();
+                ((Command)RefreshCommand).ChangeCanExecute();
             }
         }
 
-        /// <summary>
-        /// Persian: پیام خطا در صورت عدم موفقیت  
-        /// English: Error message on failure.
-        /// </summary>
         public string ErrorMessage
         {
             get => _errorMessage;
@@ -76,39 +80,41 @@ namespace InstagramAuto.Client.ViewModels
             }
         }
 
-        /// <summary>
-        /// Persian: آیا نمایش خطا فعال باشد؟  
-        /// English: Whether to show the error message.
-        /// </summary>
         public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
-        /// <summary>
-        /// Persian:
-        ///   دستور بارگذاری داده اولیه یا صفحه بعد.
-        /// English:
-        ///   Command to load initial or next page of items.
-        /// </summary>
         public ICommand LoadMoreCommand { get; }
+        public ICommand RefreshCommand { get; }
+        public ICommand CreateRuleCommand { get; }
+        public ICommand ManageRulesCommand { get; }
+        public ICommand ViewPostCommand { get; }
+        public ICommand ClearSelectionCommand { get; }
+        public ICommand CopyErrorCommand { get; }
 
-        public PostsViewModel(
-            IAuthService authService,
-            IInstagramAutoClient apiClient)
+        public PostsViewModel(IAuthService authService, IInstagramAutoClient apiClient)
         {
             _authService = authService;
             _apiClient = apiClient;
+
             LoadMoreCommand = new Command(async () => await LoadMoreAsync(), () => !IsBusy);
+            RefreshCommand = new Command(async () => await RefreshAsync(), () => !IsBusy);
+            CreateRuleCommand = new Command(async () => await CreateRuleAsync(), () => HasSelectedPosts);
+            ManageRulesCommand = new Command<PostItemViewModel>(async (post) => await ManageRulesAsync(post));
+            ViewPostCommand = new Command<PostItemViewModel>(async (post) => await ViewPostAsync(post));
+            ClearSelectionCommand = new Command(ClearSelection);
+            CopyErrorCommand = new Command(async () => await CopyErrorAsync());
         }
 
-        /// <summary>
-        /// Persian:
-        ///   متد بارگذاری صفحه اول یا صفحات بعدی مدیا.
-        /// English:
-        ///   Loads initial or subsequent pages of media items.
-        /// </summary>
+        public async Task RefreshAsync()
+        {
+            if (IsBusy) return;
+            Items.Clear();
+            _cursor = null;
+            await LoadMoreAsync();
+        }
+
         public async Task LoadMoreAsync()
         {
-            if (IsBusy)
-                return;
+            if (IsBusy) return;
 
             IsBusy = true;
             ErrorMessage = string.Empty;
@@ -116,21 +122,32 @@ namespace InstagramAuto.Client.ViewModels
 
             try
             {
-                // 1) بازیابی sessionId از احراز هویت
                 var session = await _authService.LoadSessionAsync();
 
-                // 2) فراخوانی API برای صفحه‌بندی
                 var page = await _apiClient.MediasAsync(
                     session.Id,
                     limit: 20,
                     cursor: _cursor);
 
-                // 3) اضافه کردن آیتم‌ها به ObservableCollection
-                foreach (var item in page.Items)
-                    if (!Items.Any(x => x.Id == item.Id))
-                        Items.Add(item);
+                // Load rules for the posts
+                var rules = await _authService.GetRulesAsync(session.AccountId);
+                var rulesByMedia = rules.Items.GroupBy(r => r.MediaId)
+                                            .ToDictionary(g => g.Key, g => g.ToList());
 
-                // 4) ذخیره cursor صفحه بعد
+                foreach (var item in page.Items)
+                {
+                    if (!Items.Any(x => x.Id == item.Id))
+                    {
+                        var hasRules = rulesByMedia.TryGetValue(item.Id, out var postRules);
+                        var viewModel = new PostItemViewModel(item)
+                        {
+                            HasRules = hasRules,
+                            RulesCount = hasRules ? postRules.Count : 0
+                        };
+                        Items.Add(viewModel);
+                    }
+                }
+
                 _cursor = page.Meta.Next_cursor;
             }
             catch (Exception ex)
@@ -145,14 +162,72 @@ namespace InstagramAuto.Client.ViewModels
             }
         }
 
-        // Persian:
-        //   ناوبری به صفحه کامنت‌های پست انتخاب‌شده
-        // English:
-        //   Navigate to CommentsPage for selected post
+        private async Task CreateRuleAsync()
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "mediaIds", string.Join(",", SelectedPosts.Select(p => p.Id)) }
+            };
+            await Shell.Current.GoToAsync("rule_editor", parameters);
+        }
+
+        private async Task ManageRulesAsync(PostItemViewModel post)
+        {
+            if (post == null) return;
+            var parameters = new Dictionary<string, object>
+            {
+                { "mediaId", post.Id }
+            };
+            await Shell.Current.GoToAsync("rules", parameters);
+        }
+
+        private async Task ViewPostAsync(PostItemViewModel post)
+        {
+            if (post == null) return;
+            // Open the post in browser or in-app viewer
+            await Browser.OpenAsync($"https://instagram.com/p/{post.Id}");
+        }
+
+        private void ClearSelection()
+        {
+            SelectedPosts.Clear();
+        }
+
+        private async Task CopyErrorAsync()
+        {
+            if (string.IsNullOrEmpty(ErrorDetails)) return;
+            await Clipboard.SetTextAsync(ErrorDetails);
+            await Shell.Current.DisplayAlert("انجام شد", "خطا در کلیپ‌بورد کپی شد", "باشه");
+        }
+
         public async Task GoToCommentsAsync(MediaItem post)
         {
             if (post == null) return;
-            await Shell.Current.GoToAsync($"CommentsPage?mediaId={post.Id}");
+            var parameters = new Dictionary<string, object>
+            {
+                { "mediaId", post.Id }
+            };
+            await Shell.Current.GoToAsync("comments", parameters);
         }
+
+        public async Task OpenMediaAsync(MediaItem post)
+        {
+            if (post == null) return;
+            await Browser.OpenAsync($"https://instagram.com/p/{post.Id}");
+        }
+    }
+
+    public class PostItemViewModel : MediaItem
+    {
+        public PostItemViewModel(MediaItem item)
+        {
+            Id = item.Id;
+            Caption = item.Caption;
+            Thumbnail_url = item.Thumbnail_url;
+        }
+
+        public bool HasRules { get; set; }
+        public int RulesCount { get; set; }
+        public bool IsSelected { get; set; }
     }
 }

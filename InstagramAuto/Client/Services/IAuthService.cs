@@ -19,6 +19,13 @@ namespace InstagramAuto.Client.Services
         // Comments
         Task<PaginatedComments> GetCommentsAsync(string mediaId, string cursor = null);
 
+        // Medias
+        Task<PaginatedMedias> GetMediasAsync(string accountId, int? limit = null, string cursor = null);
+
+        // Reply history
+        Task<IEnumerable<Dictionary<string, object>>> GetReplyHistoryAsync(string accountId, string mediaId);
+        Task ClearReplyHistoryAsync(string accountId, string mediaId);
+
         // Rules
         Task SaveRuleAsync(RuleItem rule);
         Task<string> ExportRulesAsync(string accountId, string format);

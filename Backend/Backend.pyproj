@@ -25,6 +25,7 @@
   <ItemGroup>
     <Folder Include=".github\workflows\" />
     <Folder Include="app\" />
+    <Folder Include="app\database\" />
     <Folder Include="app\models\" />
     <Folder Include="app\middleware\" />
     <Folder Include="app\tests\" />
@@ -50,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="app\config.py" />
+    <Compile Include="app\database\jobs_repository.py" />
     <Compile Include="app\db.py" />
     <Compile Include="app\deps.py" />
     <Compile Include="app\i18n.py" />
@@ -78,6 +80,7 @@
     <Compile Include="app\routers\settings_router.py" />
     <Compile Include="app\routers\stories_router.py" />
     <Compile Include="app\schemas\comment_schema.py" />
+    <Compile Include="app\schemas\job_schema.py" />
     <Compile Include="app\schemas\log_schema.py" />
     <Compile Include="app\schemas\media_schema.py" />
     <Compile Include="app\schemas\pagination_schema.py" />
@@ -87,9 +90,13 @@
     <Compile Include="app\services\challenge_store_redis.py" />
     <Compile Include="app\services\comment_monitor_service.py" />
     <Compile Include="app\services\dm_service.py" />
+    <Compile Include="app\services\instagram_client.py" />
     <Compile Include="app\services\insta_client_factory.py" />
     <Compile Include="app\services\insta_login_handler.py" />
+    <Compile Include="app\services\job_processor.py" />
     <Compile Include="app\services\proxy_service.py" />
+    <Compile Include="app\services\rate_limiter.py" />
+    <Compile Include="app\services\reply_history.py" />
     <Compile Include="app\services\reply_service.py" />
     <Compile Include="app\services\rules_engine.py" />
     <Compile Include="app\services\rule_engine.py" />

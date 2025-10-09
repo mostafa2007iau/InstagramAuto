@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <FontImageSource x:Key="DashboardIcon" 
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe871;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="PostsIcon"
+                     FontFamily="MaterialIcons" 
+                     Glyph="&#xe3f4;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="StoriesIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe412;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="CommentsIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe0b7;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="RulesIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe90e;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="TasksIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe8f9;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="LiveIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe63e;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="StatsIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe922;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="LogsIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe868;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="SettingsIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe8b8;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="ProxyIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe32a;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <FontImageSource x:Key="SecurityIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe32a;"
+                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}" />
+
+    <!-- Status Icons -->
+    <FontImageSource x:Key="SuccessIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe876;"
+                     Color="{StaticResource Success}" />
+
+    <FontImageSource x:Key="ErrorIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe5c9;"
+                     Color="{StaticResource Danger}" />
+
+    <FontImageSource x:Key="WarningIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe002;"
+                     Color="{StaticResource Warning}" />
+
+    <FontImageSource x:Key="LoadingIcon"
+                     FontFamily="MaterialIcons"
+                     Glyph="&#xe863;"
+                     Color="{StaticResource Primary}" />
+
+</ResourceDictionary>

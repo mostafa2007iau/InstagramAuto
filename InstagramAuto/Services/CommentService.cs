@@ -7,29 +7,26 @@ using Newtonsoft.Json;
 namespace InstagramAuto.Client.Services
 {
     /// <summary>
-    /// Persian:
-    ///   ????? API ???? ?????? ????????? ?? ???.
-    /// English:
-    ///   API service for fetching comments of a post.
+    /// Persian: ????? API ???? ?????? ????????? ?? ???
+    /// English: API service for fetching comments of a post
     /// </summary>
     public class CommentService
     {
-        private readonly IInstagramAutoClient _apiClient;
-        public CommentService(IInstagramAutoClient apiClient)
+        private readonly InstagramAuto.Client.InstagramAutoClient _apiClient;
+        
+        public CommentService(InstagramAuto.Client.InstagramAutoClient apiClient)
         {
             _apiClient = apiClient;
         }
 
-        public async Task<PaginatedComments> GetCommentsAsync(string mediaId, string cursor = null)
+        /// <summary>
+        /// Persian: ?????? ????????? ?? ??? ?? ???????? ?? ?????????
+        /// English: Get paginated comments for a post
+        /// </summary>
+        public async Task<InstagramAuto.Client.PaginatedComments> GetCommentsAsync(string mediaId, string cursor = null)
         {
-            // This method is now handled directly in AuthService, so throw NotImplementedException
-            throw new System.NotImplementedException();
+            var response = await _apiClient.GetCommentsAsync(mediaId, cursor: cursor);
+            return response;
         }
-    }
-
-    public class PaginatedComments
-    {
-        public List<CommentItem> Items { get; set; }
-        public PaginationMetaDto Meta { get; set; }
     }
 }

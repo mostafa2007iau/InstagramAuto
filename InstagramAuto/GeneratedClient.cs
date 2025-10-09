@@ -24,11 +24,12 @@ namespace InstagramAuto.Client
 {
     using InstagramAuto.Client.Models;
     using Newtonsoft.Json;
+    using System.CodeDom.Compiler;
     using System.Net.Http.Json;
     using System.Net.WebSockets;
     using System.Text;
     using System.Text.Json;
-    using System = global::System;
+    using System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial interface IInstagramAutoClient
@@ -134,7 +135,7 @@ namespace InstagramAuto.Client
         public InstagramAutoClient(System.Net.Http.HttpClient httpClient)
     #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
-            BaseUrl = "http://156.236.31.41:8000/";
+            BaseUrl = "http://217.197.97.69:8000/";
             _httpClient = httpClient;
             Initialize();
         }
@@ -405,7 +406,7 @@ namespace InstagramAuto.Client
         public async Task ConnectChallengeStreamAsync(string token, Func<string, Task> onMessage, CancellationToken cancellationToken = default)
         {
             using var ws = new ClientWebSocket();
-            var wsUrl = new Uri($"ws://156.236.31.41:8000/ws/challenge/{Uri.EscapeDataString(token)}");
+            var wsUrl = new Uri($"ws://217.197.97.69:8000/ws/challenge/{Uri.EscapeDataString(token)}");
             await ws.ConnectAsync(wsUrl, cancellationToken);
 
             var buffer = new byte[8192];
@@ -1537,28 +1538,124 @@ namespace InstagramAuto.Client
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    [GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class MediaItem
     {
-
-        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        /// <summary>
+        /// شناسه مدیا
+        /// </summary>
+        [JsonProperty("id", Required = Required.DisallowNull, NullValueHandling = NullValueHandling.Ignore)]
         public string Id { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("caption", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        /// <summary>
+        /// متن کپشن
+        /// </summary>
+        [JsonProperty("caption", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
         public string Caption { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("thumbnail_url", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Uri Thumbnail_url { get; set; }
+        /// <summary>
+        /// آدرس تصویر بندانگشتی
+        /// </summary>
+        [JsonProperty("thumbnail_url", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public Uri Thumbnail_url { get; set; }
 
-        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+        /// <summary>
+        /// اگر API شما فیلدی به نام taken_at (timestamp) برمی‌گرداند:
+        /// </summary>
+        [JsonProperty("taken_at", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public long? TakenAtTimestamp { get; set; }
 
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        /// <summary>
+        /// اگر API شما فیلدی به نام media_type برمی‌گرداند:
+        /// مثال مقادیر: "POST", "REEL", "CAROUSEL"
+        /// </summary>
+        [JsonProperty("media_type", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public string MediaType { get; set; }
+
+        private IDictionary<string, object> _additionalProperties;
+        /// <summary>
+        /// هر فیلد اضافی JSON که در مدل بالا تعریف نشده باشد در این دیکشنری قرار می‌گیرد
+        /// </summary>
+        [JsonExtensionData]
+        public IDictionary<string, object> AdditionalProperties
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            get => _additionalProperties ??= new Dictionary<string, object>();
+            set => _additionalProperties = value;
         }
 
+        // ------------ فیلدهای محاسباتی برای Binding در UI ------------
+
+        /// <summary>
+        /// تاریخ گرفته شده به صورت DateTime
+        /// (محاسبه‌شده از taken_at یا از AdditionalProperties اگر backend تغییر کند)
+        /// </summary>
+        [JsonIgnore]
+        public DateTime? TakenAt
+        {
+            get
+            {
+                if (TakenAtTimestamp.HasValue)
+                {
+                    // فرض بر ثانیه‌ای بودن timestamp
+                    return DateTimeOffset.FromUnixTimeSeconds(TakenAtTimestamp.Value).DateTime;
+                }
+                if (AdditionalProperties.TryGetValue("taken_at", out var obj))
+                {
+                    // اگر به صورت عدد یا رشته ارسال شده
+                    if (obj is long l) return DateTimeOffset.FromUnixTimeSeconds(l).DateTime;
+                    if (long.TryParse(obj?.ToString(), out var l2))
+                        return DateTimeOffset.FromUnixTimeSeconds(l2).DateTime;
+                    if (DateTime.TryParse(obj?.ToString(), out var dt)) return dt;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// متن تاریخ به فارسی برای نمایش
+        /// مثال: "۱۴۰۲/۱۰/۰۴، ساعت ۱۸:۵۵"
+        /// </summary>
+        [JsonIgnore]
+        public string TakenAtText
+        {
+            get
+            {
+                var dt = TakenAt;
+                if (!dt.HasValue) return string.Empty;
+                var pc = new System.Globalization.PersianCalendar();
+                var v = dt.Value;
+                var date = $"{pc.GetYear(v)}/{pc.GetMonth(v):00}/{pc.GetDayOfMonth(v):00}";
+                var time = $"{v:HH:mm}";
+                return $"{date}، ساعت {time}";
+            }
+        }
+
+        /// <summary>
+        /// نگاشت MediaType خام به اچار قابل نمایش
+        /// </summary>
+        [JsonIgnore]
+        public string MediaTypeBadge => string.IsNullOrEmpty(MediaType)
+            ? "POST"
+            : MediaType.ToUpperInvariant();
+
+        /// <summary>
+        /// رنگ Badge بر اساس نوع مدیا
+        /// (برای استفاده در XAML with Converter یا مستقیم)
+        /// </summary>
+        [JsonIgnore]
+        public string MediaTypeColor
+        {
+            get
+            {
+                return MediaTypeBadge switch
+                {
+                    "REEL" => "#FF6B6B",
+                    "CAROUSEL" => "#4D96FF",
+                    "POST" => "#7B5BF2",
+                    _ => "#999999",
+                };
+            }
+        }
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1667,6 +1764,7 @@ namespace InstagramAuto.Client
             set { _additionalProperties = value; }
         }
 
+        public string MediaId { get; internal set; }
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -1,51 +1,60 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 
 namespace InstagramAuto.Client.Models
 {
     /// <summary>
-    /// Persian:
-    ///   اطلاعات سشن لاگین‌شده کاربر.
-    /// English:
-    ///   Represents an authenticated session for the user.
+    /// Persian: ??? ??? ????? ??????????
+    /// English: Instagram account session model
     /// </summary>
     public class AccountSession
     {
         /// <summary>
-        /// Persian: شناسه‌ی سشن  
-        /// English: The session identifier.
+        /// Persian: ????? ???
+        /// English: Session ID
         /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
 
         /// <summary>
-        /// Persian: شناسه‌ی حساب  
-        /// English: The account identifier.
+        /// Persian: ????? ?????
+        /// English: Account ID
         /// </summary>
         [JsonProperty("account_id")]
         public string AccountId { get; set; }
 
         /// <summary>
-        /// Persian: blob سریالایز‌شدهٔ سشن  
-        /// English: Serialized session blob.
+        /// Persian: ???????? ??? ?? ???? ????
+        /// English: Session blob data
         /// </summary>
         [JsonProperty("session_blob")]
         public string SessionBlob { get; set; }
 
         /// <summary>
-        /// Persian: زمان ایجاد سشن  
-        /// English: Creation timestamp.
+        /// Persian: ????? ?????
+        /// English: Creation date
         /// </summary>
         [JsonProperty("created_at")]
         public DateTimeOffset CreatedAt { get; set; }
 
         /// <summary>
-        /// Persian: زمان آخرین به‌روزرسانی سشن  
-        /// English: Last updated timestamp.
+        /// Persian: ????? ???????????
+        /// English: Update date
         /// </summary>
         [JsonProperty("updated_at")]
         public DateTimeOffset UpdatedAt { get; set; }
 
+        /// <summary>
+        /// Persian: ????? ??????
+        /// English: Proxy ID
+        /// </summary>
+        [JsonProperty("proxy_id")]
+        public string ProxyId { get; set; }
+
+        /// <summary>
+        /// Persian: ???? ???? ???? ????? ???? ?? ????????
+        /// English: Challenge token for 2FA
+        /// </summary>
         [JsonProperty("challenge_token")]
         public string ChallengeToken { get; set; }
     }
