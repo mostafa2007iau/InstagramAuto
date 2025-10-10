@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="app\config.py" />
+    <Compile Include="app\database\base.py" />
     <Compile Include="app\database\jobs_repository.py" />
     <Compile Include="app\database\settings_repository.py" />
     <Compile Include="app\db.py" />

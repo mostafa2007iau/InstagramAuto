@@ -15,7 +15,7 @@ English:
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List,Any
 import asyncio
 import logging
 from app.schemas.job_schema import JobItem
