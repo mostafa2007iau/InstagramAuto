@@ -12,6 +12,7 @@ from fastapi import Request, Depends
 from app.services.session_manager import SessionManager
 from app.config import LOG_VERBOSITY_DEFAULT, LogVerbosity
 from app.db import get_session
+from app.database.sessions_repository import SessionsRepository
 
 # Singleton session manager instance used by DI
 _session_manager = None
@@ -19,7 +20,9 @@ _session_manager = None
 def get_session_manager(db=Depends(get_session)) -> SessionManager:
     global _session_manager
     if _session_manager is None:
-        _session_manager = SessionManager(db)
+        # Wrap DB into a SessionsRepository so SessionManager gets the expected API
+        sessions_repo = SessionsRepository(db)
+        _session_manager = SessionManager(sessions_repo)
     return _session_manager
 
 def get_locale(request: Request) -> str:

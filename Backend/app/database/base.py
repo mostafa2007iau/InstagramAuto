@@ -23,3 +23,9 @@ class BaseRepository:
     def ensure_db(self):
         if self.db is None:
             raise RuntimeError('Database session not initialized for repository')
+
+    # convenience factory to create a SessionsRepository if needed
+    @classmethod
+    def sessions_repository_from(cls, db):
+        from app.database.sessions_repository import SessionsRepository
+        return SessionsRepository(db)
