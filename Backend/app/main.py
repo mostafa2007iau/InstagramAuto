@@ -39,6 +39,7 @@ from app.database.jobs_repository import JobsRepository
 from app.database.rules_repository import RulesRepository
 from app.database.settings_repository import SettingsRepository
 from app.services.insta_client_factory import InstaClientFactory
+from app.services.reply_history import ReplyHistoryService
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis  # redis-py async client
 
@@ -50,13 +51,15 @@ settings_repo = SettingsRepository()
 # Create services
 rate_limiter = RateLimiter(settings_repo)
 client_factory = InstaClientFactory()
+reply_history = ReplyHistoryService()
 
 # Create job processor
 job_processor = JobProcessor(
     client_factory=client_factory,
     jobs_repo=jobs_repo,
     rules_repo=rules_repo,
-    rate_limiter=rate_limiter
+    rate_limiter=rate_limiter,
+    reply_history=reply_history
 )
 
 app = FastAPI(
@@ -70,14 +73,16 @@ app = FastAPI(
 app.add_middleware(VerbosityMiddleware)
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI, job_processor: JobProcessor):
     # Start job processor
-    asyncio.create_task(job_processor.start())
-    
-    yield
-    
-    # Stop job processor
-    await job_processor.stop()
+    task = asyncio.create_task(job_processor.start())
+    try:
+        yield
+    finally:
+        # Stop job processor
+        await job_processor.stop()
+        task.cancel()
 
 
 @app.on_event("startup")

@@ -31,13 +31,11 @@ docker container prune
 //حذف همه‌ی کانتینرها (در حال اجرا و متوقف) با یک دستور:
 docker rm $(docker ps -aq)
 
+rm -rf InstagramAuto
+git clone https://github.com/mostafa2007iau/InstagramAuto.git
 
+docker build -t instagramauto-backend .
 docker-compose down
-
-docker-compose build
-
-//
 docker-compose build --no-cache
-
-//
 docker-compose up -d
+docker logs --tail 100 -f insta_backend

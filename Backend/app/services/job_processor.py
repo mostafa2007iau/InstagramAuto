@@ -102,7 +102,7 @@ class JobProcessor:
                             await self._create_dm_job(rule, comment)
 
             except Exception as e:
-                logger.error(f"Error processing rule {rule.id}: {e}")
+                logger.error(f"Error processing rule {rule.id}: {e}", exc_info=True)
 
         # 6. Process pending jobs
         await self._process_pending_jobs()
