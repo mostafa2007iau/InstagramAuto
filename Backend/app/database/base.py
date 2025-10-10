@@ -5,6 +5,9 @@ English:
     BaseRepository: Base class for database repositories.
 """
 
+from sqlmodel import Session
+
+
 class BaseRepository:
-    def __init__(self, db=None):
+    def __init__(self, db: Session):
         self.db = db

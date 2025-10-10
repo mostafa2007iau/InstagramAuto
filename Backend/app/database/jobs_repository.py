@@ -14,6 +14,9 @@ from app.schemas.job_schema import JobItem, JobStatus
 from app.models.job_model import Job
 
 class JobsRepository(BaseRepository):
+    def __init__(self, db):
+        super().__init__(db)
+
     async def create_job(self, job: JobItem) -> str:
         """Create a new job"""
         db_job = Job(

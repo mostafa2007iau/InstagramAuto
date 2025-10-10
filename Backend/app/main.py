@@ -31,7 +31,7 @@ from app.routers import (
     stories_router,
 )
 from app.middleware.verbosity_middleware import VerbosityMiddleware, default_rate_limit, strict_rate_limit
-from app.db import init_db
+from app.db import init_db, get_session
 from app.services import telemetry_service
 from app.services.job_processor import JobProcessor
 from app.services.rate_limiter import RateLimiter
@@ -44,9 +44,9 @@ from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis  # redis-py async client
 
 # Create repositories
-jobs_repo = JobsRepository()
-rules_repo = RulesRepository()
-settings_repo = SettingsRepository()
+jobs_repo = JobsRepository(db=get_session())
+rules_repo = RulesRepository(db=get_session())
+settings_repo = SettingsRepository(db=get_session())
 
 # Create services
 rate_limiter = RateLimiter(settings_repo)

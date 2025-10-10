@@ -13,6 +13,9 @@ from app.models.rule_model import Rule
 from app.schemas.rule_schema import RuleIn, RuleOut, RuleUpdate
 
 class RulesRepository(BaseRepository):
+    def __init__(self, db):
+        super().__init__(db)
+
     async def create_rule(self, rule_in: RuleIn) -> RuleOut:
         rule = Rule(
             account_id=rule_in.account_id,
