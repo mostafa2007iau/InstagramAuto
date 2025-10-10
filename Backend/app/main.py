@@ -75,18 +75,8 @@ async def startup_event():
     # initialize DB and other startup tasks
     init_db()
 
-    # initialize Redis and fastapi-limiter
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    try:
-        client = redis.Redis.from_url(
-            redis_url,
-            encoding="utf-8",
-            decode_responses=True,
-        )
-        await FastAPILimiter.init(client)
-    except Exception:
-        # if limiter init fails, continue without rate-limiting
-        pass
+    # Skip initializing fastapi-limiter to avoid compatibility issues with redis client
+    # If you need rate limiting, configure with a supported redis client or install fastapi-limiter compatible deps.
 
     # Create reply history and job processor after DB init
     global reply_history, job_processor
