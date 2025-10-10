@@ -1,13 +1,21 @@
 """
 Persian:
-    ?????????? ??????? ????? (????).
+    SettingsRepository: ?????????? ??????? ????? (????).
 English:
-    Basic settings repository for account settings (stub).
+    Settings repository for account-level settings (stubbed implementation).
 """
 
-class SettingsRepository:
-    async def get_account_settings(self, account_id):
-        # TODO: Implement actual DB logic. For now, return default settings.
+from typing import Optional
+from app.database.base import BaseRepository
+
+class SettingsRepository(BaseRepository):
+    def __init__(self, db=None):
+        super().__init__(db)
+
+    async def get_account_settings(self, account_id: str):
+        """Return account settings. Currently returns defaults (no DB backing).
+        Kept async so callers can await this method even if implementation is sync.
+        """
         class Settings:
             reply_delay = 5
             dm_delay = 5

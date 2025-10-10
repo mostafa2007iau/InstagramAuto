@@ -5,9 +5,14 @@ English:
     Rules repository for managing CRUD operations on rules in the database.
 """
 
+"""
+Rules repository adapted to work with sync SQLModel Session in async code by using asyncio.to_thread.
+"""
+
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import select
+import asyncio
 from app.database.base import BaseRepository
 from app.models.rule_model import Rule
 from app.schemas.rule_schema import RuleIn, RuleOut, RuleUpdate
@@ -17,55 +22,65 @@ class RulesRepository(BaseRepository):
         super().__init__(db)
 
     async def create_rule(self, rule_in: RuleIn) -> RuleOut:
-        rule = Rule(
-            account_id=rule_in.account_id,
-            name=rule_in.name,
-            expression=rule_in.condition,
-            enabled=rule_in.enabled,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
-        self.db.add(rule)
-        await self.db.commit()
-        await self.db.refresh(rule)
+        def _sync():
+            rule = Rule(
+                account_id=rule_in.account_id,
+                name=rule_in.name,
+                expression=rule_in.condition,
+                enabled=rule_in.enabled,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            self.db.add(rule)
+            self.db.commit()
+            self.db.refresh(rule)
+            return rule
+        rule = await asyncio.to_thread(_sync)
         return self._to_schema(rule)
 
     async def get_rule(self, rule_id: int) -> Optional[RuleOut]:
-        rule = await self.db.get(Rule, rule_id)
+        def _sync():
+            return self.db.get(Rule, rule_id)
+        rule = await asyncio.to_thread(_sync)
         if not rule:
             return None
         return self._to_schema(rule)
 
     async def update_rule(self, rule_id: int, update: RuleUpdate) -> Optional[RuleOut]:
-        rule = await self.db.get(Rule, rule_id)
+        def _sync():
+            rule = self.db.get(Rule, rule_id)
+            if not rule:
+                return None
+            for field, value in update.dict(exclude_unset=True).items():
+                if hasattr(rule, field):
+                    setattr(rule, field, value)
+            rule.updated_at = datetime.utcnow()
+            self.db.commit()
+            self.db.refresh(rule)
+            return rule
+        rule = await asyncio.to_thread(_sync)
         if not rule:
             return None
-        for field, value in update.dict(exclude_unset=True).items():
-            if hasattr(rule, field):
-                setattr(rule, field, value)
-        rule.updated_at = datetime.utcnow()
-        await self.db.commit()
-        await self.db.refresh(rule)
         return self._to_schema(rule)
 
     async def delete_rule(self, rule_id: int) -> bool:
-        rule = await self.db.get(Rule, rule_id)
-        if not rule:
-            return False
-        await self.db.delete(rule)
-        await self.db.commit()
-        return True
+        def _sync():
+            rule = self.db.get(Rule, rule_id)
+            if not rule:
+                return False
+            self.db.delete(rule)
+            self.db.commit()
+            return True
+        return await asyncio.to_thread(_sync)
 
     async def get_active_rules(self, account_id: Optional[str] = None) -> List[RuleOut]:
-        stmt = select(Rule).where(Rule.enabled == True)
-        if account_id:
-            stmt = stmt.where(Rule.account_id == account_id)
-        try:
-            result = await self.db.execute(stmt)
-        except Exception:
-            # If underlying DB session is synchronous (Session.execute) call it synchronously
+        def _sync():
+            stmt = select(Rule).where(Rule.enabled == True)
+            if account_id:
+                stmt = stmt.where(Rule.account_id == account_id)
             result = self.db.execute(stmt)
-        rules = result.scalars().all()
+            return result.scalars().all()
+        rules = await asyncio.to_thread(_sync)
         return [self._to_schema(r) for r in rules]
 
     def _to_schema(self, rule: Rule) -> RuleOut:
