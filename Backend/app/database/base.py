@@ -19,3 +19,7 @@ class BaseRepository:
                 self.db = None
         else:
             self.db = db
+
+    def ensure_db(self):
+        if self.db is None:
+            raise RuntimeError('Database session not initialized for repository')

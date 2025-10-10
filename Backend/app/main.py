@@ -44,6 +44,8 @@ from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis  # redis-py async client
 from sqlmodel import Session
 
+# Remove lifespan usage; manage job processor in startup/shutdown events
+
 # Create a single DB session to reuse (simple approach for this app)
 _db_session = Session(engine)
 
@@ -55,38 +57,17 @@ settings_repo = SettingsRepository(db=_db_session)
 # Create services
 rate_limiter = RateLimiter(settings_repo)
 client_factory = InstaClientFactory()
-reply_history = ReplyHistoryService()
-
-# Create job processor
-job_processor = JobProcessor(
-    client_factory=client_factory,
-    jobs_repo=jobs_repo,
-    rules_repo=rules_repo,
-    rate_limiter=rate_limiter,
-    reply_history=reply_history
-)
+reply_history = None
+job_processor = None
 
 app = FastAPI(
     title="InstaAutomation Backend",
     description="Backend for Insta automation with i18n, per-session proxy and pagination",
     version="v1",
-    lifespan=lambda app: lifespan(app, job_processor),
 )
 
 # ✅ اضافه کردن middleware سفارشی
 app.add_middleware(VerbosityMiddleware)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI, job_processor: JobProcessor):
-    # Start job processor
-    task = asyncio.create_task(job_processor.start())
-    try:
-        yield
-    finally:
-        # Stop job processor
-        await job_processor.stop()
-        task.cancel()
 
 
 @app.on_event("startup")
@@ -106,6 +87,27 @@ async def startup_event():
     except Exception:
         # if limiter init fails, continue without rate-limiting
         pass
+
+    # Create reply history and job processor after DB init
+    global reply_history, job_processor
+    reply_history = ReplyHistoryService()
+    job_processor = JobProcessor(
+        client_factory=client_factory,
+        jobs_repo=jobs_repo,
+        rules_repo=rules_repo,
+        rate_limiter=rate_limiter,
+        reply_history=reply_history
+    )
+    # start background job processor
+    asyncio.create_task(job_processor.start())
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Stop background job processor
+    global job_processor
+    if job_processor:
+        await job_processor.stop()
 
 
 # Health

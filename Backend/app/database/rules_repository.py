@@ -75,6 +75,7 @@ class RulesRepository(BaseRepository):
 
     async def get_active_rules(self, account_id: Optional[str] = None) -> List[RuleOut]:
         def _sync():
+            self.ensure_db()
             stmt = select(Rule).where(Rule.enabled == True)
             if account_id:
                 stmt = stmt.where(Rule.account_id == account_id)

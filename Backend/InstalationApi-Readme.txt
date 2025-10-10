@@ -33,7 +33,7 @@ docker rm $(docker ps -aq)
 
 rm -rf InstagramAuto
 git clone https://github.com/mostafa2007iau/InstagramAuto.git
-
+cd InstagramAuto/Backend
 docker build -t instagramauto-backend .
 docker-compose down
 docker-compose build --no-cache
