@@ -60,7 +60,11 @@ class RulesRepository(BaseRepository):
         stmt = select(Rule).where(Rule.enabled == True)
         if account_id:
             stmt = stmt.where(Rule.account_id == account_id)
-        result = await self.db.execute(stmt)
+        try:
+            result = await self.db.execute(stmt)
+        except Exception:
+            # If underlying DB session is synchronous (Session.execute) call it synchronously
+            result = self.db.execute(stmt)
         rules = result.scalars().all()
         return [self._to_schema(r) for r in rules]
 

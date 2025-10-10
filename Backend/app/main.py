@@ -31,7 +31,7 @@ from app.routers import (
     stories_router,
 )
 from app.middleware.verbosity_middleware import VerbosityMiddleware, default_rate_limit, strict_rate_limit
-from app.db import init_db, get_session
+from app.db import init_db, engine
 from app.services import telemetry_service
 from app.services.job_processor import JobProcessor
 from app.services.rate_limiter import RateLimiter
@@ -42,11 +42,15 @@ from app.services.insta_client_factory import InstaClientFactory
 from app.services.reply_history import ReplyHistoryService
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis  # redis-py async client
+from sqlmodel import Session
+
+# Create a single DB session to reuse (simple approach for this app)
+_db_session = Session(engine)
 
 # Create repositories
-jobs_repo = JobsRepository(db=get_session())
-rules_repo = RulesRepository(db=get_session())
-settings_repo = SettingsRepository(db=get_session())
+jobs_repo = JobsRepository(db=_db_session)
+rules_repo = RulesRepository(db=_db_session)
+settings_repo = SettingsRepository(db=_db_session)
 
 # Create services
 rate_limiter = RateLimiter(settings_repo)

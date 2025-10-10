@@ -65,6 +65,11 @@ class JobProcessor:
         """Run one processing cycle"""
         # 1. Get active rules
         rules = await self._rules_repo.get_active_rules()
+        if rules is None:
+            logger.error("Rules repository returned None for active rules, skipping cycle")
+            await asyncio.sleep(self._check_interval)
+            # continue
+
         for rule in rules:
             try:
                 client = self._client_factory.create_new()
