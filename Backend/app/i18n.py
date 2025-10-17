@@ -119,7 +119,12 @@ def translate(key: str, locale: str = "en", **kwargs) -> str:
         # fallback to key
         return key
     text = entry.get(locale) or entry.get("en") or key
+    if not kwargs:
+        return text
     try:
-        return text.format(**kwargs) if kwargs else text
-    except Exception:
+        return text.format(**kwargs)
+    except KeyError as e:
+        # Log a warning with the key and original exception
+        import logging
+        logging.warning(f"Failed to format translation for key '{key}': {e}")
         return text
